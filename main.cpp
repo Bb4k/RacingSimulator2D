@@ -1,30 +1,64 @@
 #include <iostream>
 #include <windows.h>
-#include <GL/freeglut.h>
 #include <cstdlib>
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+#include <chrono>
 
-using namespace std;
+// --site-packages--
+#include <GL/freeglut.h>
 
+
+// -- defines work area --
 GLdouble left_m = -100.0;
 GLdouble right_m = 700.0;
 GLdouble bottom_m = -140.0;
 GLdouble top_m = 460.0;
 
-double ok = 1;
+// -- logic game grid -
+#define GRID_Y_LOWER 0
+#define GRID_Y_MID 160
+#define GRID_Y_UPPER 320
 
-double car_pos_y = 0.0;
-double car_pos_x = 0.0;
+#define GRID_X_LEFT 0
+#define GRID_X_MID 320
+#define GRID_X_RIGHT 600
 
-double i = 0.0;
+// -- defines if game has ended --
+int _run = 1;
 
-double contor = 0;
-double loc_vert = 800;
-int vector[3] = { 0, 160, 320 };
-double height = vector[rand() % 3];
-int score = 0;
-double timp = 1;
-int pct = 100; // rata la care creste timpul
-double rsj, rdj, rss, rds = 0;
+// -- defines p(layer)_car status --
+double	p_car_pos_y				= 0.0;
+double	p_car_pos_x				= 0.0;
+int		p_car_powerup			= 0;
+int		p_car_pos_x_values[3]	= { GRID_X_LEFT, GRID_X_MID, GRID_X_RIGHT };
+	// -- used for swift animation from one grid area to another
+	int		contor_y			= 0; // increase/decrease contor relative to start position 
+	int		contor_x			= 0;
+
+
+// -- c(omputer)_car status --
+double	c_car_pos_x				= 800; //start position of car (inversely proportional to time_pos*c_car_speed --^)
+int		c_car_pos_y_values[3]	= { GRID_Y_LOWER, GRID_Y_MID, GRID_Y_UPPER }; 
+double	c_car_pos_y				= c_car_pos_y_values[rand() % 3]; 
+double	c_car_speed				= 1;
+
+// -- general game status --
+#define WIN_SCORE			15000
+int		p_score				= 0;
+int		pts_to_speed_incr	= 100; // speed increase rate
+	// -- powerups --
+	int		powerup_gen		= 0;
+	int		powerup_pos_x	= 0.0;
+	int		powerup_pos_y	= 0.0;
+	int		powerup_size	= 20;
+	int		powerup_time_on = 5; //seconds
+
+	// -- ??? --
+	double rsj, rdj, rss, rds = 0; //?
 
 void init(void)
 {
@@ -38,71 +72,50 @@ void RenderString(float x, float y, void* font, const unsigned char* string)
 
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glRasterPos2f(x, y);
-
 	glutBitmapString(font, string);
+
 }
+
+
 void startgame(void)
 {
 
-	/*std::cout << "height: " << height << "car_pos_y: " << car_pos_y << std::endl;
-	std::cout << "loc_vert: " << loc_vert << "car_pos_x: " << car_pos_x << std::endl;*/
 	Sleep(1); // t/dt fix kb lag imput
 
-	if (abs(height - car_pos_y) > std::numeric_limits<double>::epsilon() + timp || abs(loc_vert - car_pos_x) > std::numeric_limits<double>::epsilon() + timp) //double equal right way
+	if (abs(c_car_pos_y - p_car_pos_y) > std::numeric_limits<double>::epsilon() + c_car_speed || abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) //double equal right way
 	{
 
-		if (i < -380) //190*2
-		{
-			i = 0;
-		}
-		i = i - 2 * timp;
+		c_car_pos_x -= c_car_speed;
 
-		loc_vert -= timp;
-
-		if (loc_vert < -150)
+		if (c_car_pos_x < -150)
 		{
-			score += 100;
-			height = vector[rand() % 3];
-			//cout << "Score:  " << score << endl;
-			loc_vert = 800;
+			p_score += 100;
+			c_car_pos_y = c_car_pos_y_values[rand() % 3];
+			//std::cout << "Score:  " << score << endl;
+			c_car_pos_x = 800;
 		}
 
-		if (score >= pct && pct <= 15000)
+		if (p_score >= pts_to_speed_incr && pts_to_speed_incr <= WIN_SCORE)
 		{
-			timp += 0.1;
-			pct += 100;
+			c_car_speed += 0.1;
+			pts_to_speed_incr += 100;
+		}
+
+		if (p_score % 1000 == 0  && !powerup_gen && p_score > 0) {
+			powerup_gen = 1;
+			powerup_pos_x = rand() % 650 + 100;
+			powerup_pos_y = rand() % 335;
 		}
 
 		glutPostRedisplay();
 	}
 	else {
 		//std::cout << "should exit";
-		ok = 0;
+		_run = 0;
 	}
 }
 
-void drawScene(void)
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	//desenam masina
-	glPushMatrix();
-	glTranslated(car_pos_x, car_pos_y, 0.0);
-
-	glColor3f(0.996, 0.365, 0.149);
-	glRecti(-45, -15, 45, 15); //dimensiunile dreptunghului
-
-	if (ok == 0) //ceva neimplementat, probabil rotile
-	{
-		rsj = 8;
-		rss = -8;
-		rdj = -8;
-		rds = 8;
-	}
-
-
-	glPopMatrix();
-	
+void draw_background() {
 	glColor3f(0.55, 0.788, 0.451);
 
 	// Iarba de jos
@@ -140,8 +153,8 @@ void drawScene(void)
 
 	// Liniile intrerupte
 	glPushMatrix();
-	glTranslated(i, 0.0, 0.0);
-	
+	glTranslated(time_pos, 0.0, 0.0);
+
 
 	glBegin(GL_LINES);
 	glVertex2i(-100, 80);
@@ -153,39 +166,90 @@ void drawScene(void)
 	glVertex2i(1500, 240);
 	glEnd();
 	glPopMatrix();
+}
+void draw_p_car() {
+	glPushMatrix();
+	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
 
+	glColor3f(0.996, 0.365, 0.149);
+	glRecti(-45, -15, 45, 15); //dimensiunile dreptunghului
+	glPopMatrix();
 
-
-	
-
-
-	if (ok == 0) {
-		RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"GAME OVER");
-	}
-
-	if (contor == 1 && (car_pos_y != 160 && car_pos_y != 320))
-		car_pos_y = car_pos_y + 1;
-	else if (contor == -1 && (car_pos_y != 160 && car_pos_y != 0))
-		car_pos_y = car_pos_y - 1;
+	// --- move car to logical grid positions while position != any grid position x or y
+	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER))
+		p_car_pos_y = p_car_pos_y + 1;
+	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER))
+		p_car_pos_y = p_car_pos_y - 1;
 	else {
-		contor = 0;
+		contor_y = 0;
 	}
 
+	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_RIGHT))
+		p_car_pos_x = p_car_pos_x + 1;
+	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT))
+		p_car_pos_x = p_car_pos_x - 1;
+	else {
+		contor_x = 0;
+	}
+
+}
+void draw_c_car() {
 	//desenam a doua masina (adversara)
 	glPushMatrix();
-	glTranslated(loc_vert, height, 0.0);
+	glTranslated(c_car_pos_x, c_car_pos_y, 0.0);
 
 	glColor3f(0.471, 0.667, 0.949);
 	glRecti(-45, -15, 45, 15);
 
 
 	glPopMatrix();
+}
+void draw_powerup() {
+	if (powerup_gen) {
+		glBegin(GL_POLYGON);
+		glColor3f(1, 0, 0);
+		glVertex2i(powerup_pos_x, powerup_pos_y);// Stanga jos
+		glVertex2i(powerup_pos_x + powerup_size, powerup_pos_y); // Dreapta jos
+		glVertex2i(powerup_pos_x + powerup_size, powerup_pos_y + powerup_size); // Dreapta sus
+		glVertex2i(powerup_pos_x, powerup_pos_y + powerup_size);// Stanga sus
+		glEnd();
+	}
+	if ((p_score+500) % 1000 == 0)
+		powerup_gen = 0;
+
+}
+void drawScene(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	draw_background();
+	draw_p_car();
+	draw_c_car();
+	draw_powerup();
+	
+	
+	
+
+	
+
+
+	// -- end game --
+	if (_run == 0) {
+		//TODO call end_screen 
+		RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"GAME OVER");
+	}
+
+	
+
+	
 
 	startgame();
 	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
 }
+
+
 
 void reshape(int w, int h)
 {
@@ -197,70 +261,86 @@ void reshape(int w, int h)
 	glLoadIdentity();
 }
 
-void miscasus(void)
-{
+void miscasus(void){
 
-		if (car_pos_y < 320)
-		{
-			contor = 1;
-			car_pos_y += 1;
+		if (p_car_pos_y < 320){
+			contor_y = 1;
+			p_car_pos_y += 1;
 		}
 
 		glutPostRedisplay();
 }
+void miscajos(void){	
 
-void miscajos(void)
-{	
-
-	if (car_pos_y > 0)
+	if (p_car_pos_y > 0)
 	{
-		contor = -1;
-		car_pos_y -= 1;
+		contor_y = -1;
+		p_car_pos_y -= 1;
 	}
 		glutPostRedisplay();
 }
-
-void miscadreapta(void)
-{	
-	
-		if (car_pos_x < 700)
-			car_pos_x += 10;
-
-		glutPostRedisplay();
-	
+void miscadreapta(void){	
+	if (p_car_pos_x < 700) {
+		p_car_pos_x += 10;
+		contor_x += 1;
+	}
+	glutPostRedisplay();
 }
-
 void miscastanga(void)
 {	
 	
-		if (car_pos_x > 0)
-			car_pos_x -= 10;
+	if (p_car_pos_x > 0) {
+		p_car_pos_x -= 10;
+		contor_x -= 1;
+	}
 
-		glutPostRedisplay();
+	glutPostRedisplay();
 }
-
 void keyboard(int key, int x, int y)
 {
-	if (ok != 0)
-		switch (key) {
-			case GLUT_KEY_UP:
-				miscasus();
-				break;
-			case GLUT_KEY_DOWN:
-				miscajos();
-				break;
-			case GLUT_KEY_LEFT:
-				miscastanga();
-				break;
-			case GLUT_KEY_RIGHT:
-				miscadreapta();
-				break;
-			default: 
-				break;
-		}
-
+	switch (key) {
+		case GLUT_KEY_UP:
+			miscasus();
+			break;
+		case GLUT_KEY_DOWN:
+			miscajos();
+			break;
+		case GLUT_KEY_LEFT:
+			miscastanga();
+			break;
+		case GLUT_KEY_RIGHT:
+			miscadreapta();
+			break;
+		default: 
+			break;
+	}
 }
 
+void leftclick(void) {
+	glutPostRedisplay();
+}
+
+void rightclick(void) {
+	glutPostRedisplay();
+}
+
+void mouse(int button, int state,int x, int y){
+	switch (button) {
+		case GLUT_LEFT_BUTTON:
+			leftclick();
+			break;
+		case GLUT_RIGHT_BUTTON:
+			rightclick();
+			break;
+		default:
+			break;
+	
+
+	}
+}
+
+
+void main_menu() {}
 
 int main(int argc, char** argv)
 {
