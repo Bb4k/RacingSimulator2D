@@ -30,7 +30,7 @@ GLdouble top_m = 460.0;
 // -- defines if game has ended --
 int _run = 1;
 
-// -- defines p(layer)_car status --
+// -- p(layer)_car status --
 double	p_car_pos_y				= 0.0;
 double	p_car_pos_x				= 0.0;
 int		p_car_powerup			= 0;
@@ -60,6 +60,8 @@ int		pts_to_speed_incr	= 100; // speed increase rate
 	// -- ??? --
 	double rsj, rdj, rss, rds = 0; //?
 
+	int street_line = 1000;
+
 void init(void)
 {
 	glClearColor(0.98, 0.929, 0.792, 0.0);
@@ -86,7 +88,9 @@ void startgame(void)
 	{
 
 		c_car_pos_x -= c_car_speed;
-
+		street_line -= 2;
+		if (street_line == -500)
+			street_line = 1000;
 		if (c_car_pos_x < -150)
 		{
 			p_score += 100;
@@ -152,46 +156,58 @@ void draw_background() {
 	glEnd();
 
 	// Liniile intrerupte
+	
 	glPushMatrix();
-	glTranslated(time_pos, 0.0, 0.0);
-
+	glTranslated(street_line, 0.0, 0.0);
+	glLineWidth(15);
 
 	glBegin(GL_LINES);
-	glVertex2i(-100, 80);
-	glVertex2i(1500, 80);
+	glVertex2i(0, 80);
+	glVertex2i(400, 80);
 	glEnd();
 
 	glBegin(GL_LINES);
-	glVertex2i(-100, 240);
-	glVertex2i(1500, 240);
+	glVertex2i(0, 240);
+	glVertex2i(400, 240);
 	glEnd();
+	
+
 	glPopMatrix();
 }
+
 void draw_p_car() {
+
 	glPushMatrix();
 	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
-
+	
 	glColor3f(0.996, 0.365, 0.149);
-	glRecti(-45, -15, 45, 15); //dimensiunile dreptunghului
-	glPopMatrix();
-
+	
 	// --- move car to logical grid positions while position != any grid position x or y
-	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER))
+	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
 		p_car_pos_y = p_car_pos_y + 1;
-	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER))
+		glRotated(5, 0, 0, 1); 
+	}
+	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
 		p_car_pos_y = p_car_pos_y - 1;
+		glRotated(-5, 0, 0, 1);
+
+	}
 	else {
+		glRotated(0, 0, 0, 1);
 		contor_y = 0;
 	}
 
-	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_RIGHT))
+	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_RIGHT)) {
 		p_car_pos_x = p_car_pos_x + 1;
-	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT))
+	}
+	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
 		p_car_pos_x = p_car_pos_x - 1;
+	}
 	else {
 		contor_x = 0;
 	}
-
+	glRecti(-50, -20, 50, 20); //dimensiunile dreptunghului
+	glPopMatrix();
 }
 void draw_c_car() {
 	//desenam a doua masina (adversara)
@@ -218,34 +234,31 @@ void draw_powerup() {
 		powerup_gen = 0;
 
 }
+
 void drawScene(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// -- static objects --
 	draw_background();
-	draw_p_car();
-	draw_c_car();
 	draw_powerup();
 	
+	// -- dynamic objects --
+	draw_p_car();
+	draw_c_car();
 	
 	
-
-	
-
-
 	// -- end game --
 	if (_run == 0) {
 		//TODO call end_screen 
 		RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"GAME OVER");
 	}
 
-	
-
-	
-
 	startgame();
+
 	glutPostRedisplay();
 	glutSwapBuffers();
+
 	glFlush();
 }
 
@@ -334,8 +347,6 @@ void mouse(int button, int state,int x, int y){
 			break;
 		default:
 			break;
-	
-
 	}
 }
 
