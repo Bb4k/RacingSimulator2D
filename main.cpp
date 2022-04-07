@@ -21,7 +21,7 @@ double loc_vert = 800;
 int vector[3] = { 0, 160, 320 };
 double height = vector[rand() % 3];
 int score = 0;
-double timp = 0.15;
+double timp = 1;
 int pct = 1000; // rata la care creste timpul
 double rsj, rdj, rss, rds = 0;
 
@@ -43,10 +43,13 @@ void RenderString(float x, float y, void* font, const unsigned char* string)
 void startgame(void)
 {
 
-	if (height != car_pos_y && loc_vert != car_pos_x)
+	std::cout << "height: " << height << "car_pos_y: " << car_pos_y << std::endl;
+	std::cout << "loc_vert: " << loc_vert << "car_pos_x: " << car_pos_x << std::endl;
+
+	if (abs(height - car_pos_y) > std::numeric_limits<double>::epsilon() || abs(loc_vert - car_pos_x) > std::numeric_limits<double>::epsilon()) //double equal right way
 	{
 
-		if (i < -380)
+		if (i < -380) //190*2
 		{
 			i = 0;
 		}
@@ -58,7 +61,7 @@ void startgame(void)
 		{
 			score += 100;
 			height = vector[rand() % 3];
-			cout << "Score:  " << score << endl;
+			//cout << "Score:  " << score << endl;
 			loc_vert = 800;
 		}
 
@@ -71,6 +74,7 @@ void startgame(void)
 		glutPostRedisplay();
 	}
 	else {
+		std::cout << "should end";
 		ok = 0;
 	}
 }
@@ -79,6 +83,23 @@ void drawScene(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	//desenam masina
+	glPushMatrix();
+	glTranslated(car_pos_x, car_pos_y, 0.0);
+
+	glColor3f(0.996, 0.365, 0.149);
+	glRecti(-45, -15, 45, 15); //dimensiunile dreptunghului
+
+	if (ok == 0) //ceva neimplementat, probabil rotile
+	{
+		rsj = 8;
+		rss = -8;
+		rdj = -8;
+		rds = 8;
+	}
+
+
+	glPopMatrix();
 	
 	glColor3f(0.55, 0.788, 0.451);
 
@@ -133,24 +154,8 @@ void drawScene(void)
 
 
 
-	//desenam masina
-	glPushMatrix();
-	glTranslated(car_pos_x, car_pos_y, 0.0);
-
-	glColor3f(0.996, 0.365, 0.149);
-	glRecti(-45, -15, 45, 15); //dimensiunile dreptunghului
-
-	if (ok == 0) //ceva neimplementat, probabil rotile
-	{
-		rsj = 8;
-		rss = -8;
-		rdj = -8;
-		rds = 8;
-	}
-
 	
-	glPopMatrix();
-	glPopMatrix();
+
 
 	if (ok == 0) {
 		RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"GAME OVER");
@@ -175,7 +180,7 @@ void drawScene(void)
 	glPopMatrix();
 
 	startgame();
-	glutPostRedisplay();
+	//glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
 }
