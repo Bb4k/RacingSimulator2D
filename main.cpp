@@ -1,6 +1,7 @@
 #include <iostream>
 #include <windows.h>
 #include <GL/freeglut.h>
+#include <cstdlib>
 
 using namespace std;
 
@@ -22,7 +23,7 @@ int vector[3] = { 0, 160, 320 };
 double height = vector[rand() % 3];
 int score = 0;
 double timp = 1;
-int pct = 1000; // rata la care creste timpul
+int pct = 100; // rata la care creste timpul
 double rsj, rdj, rss, rds = 0;
 
 void init(void)
@@ -43,10 +44,11 @@ void RenderString(float x, float y, void* font, const unsigned char* string)
 void startgame(void)
 {
 
-	std::cout << "height: " << height << "car_pos_y: " << car_pos_y << std::endl;
-	std::cout << "loc_vert: " << loc_vert << "car_pos_x: " << car_pos_x << std::endl;
+	/*std::cout << "height: " << height << "car_pos_y: " << car_pos_y << std::endl;
+	std::cout << "loc_vert: " << loc_vert << "car_pos_x: " << car_pos_x << std::endl;*/
+	Sleep(1); // t/dt fix kb lag imput
 
-	if (abs(height - car_pos_y) > std::numeric_limits<double>::epsilon() || abs(loc_vert - car_pos_x) > std::numeric_limits<double>::epsilon()) //double equal right way
+	if (abs(height - car_pos_y) > std::numeric_limits<double>::epsilon() + timp || abs(loc_vert - car_pos_x) > std::numeric_limits<double>::epsilon() + timp) //double equal right way
 	{
 
 		if (i < -380) //190*2
@@ -68,13 +70,13 @@ void startgame(void)
 		if (score >= pct && pct <= 15000)
 		{
 			timp += 0.1;
-			pct += 1000;
+			pct += 100;
 		}
 
 		glutPostRedisplay();
 	}
 	else {
-		std::cout << "should end";
+		//std::cout << "should exit";
 		ok = 0;
 	}
 }
@@ -180,7 +182,7 @@ void drawScene(void)
 	glPopMatrix();
 
 	startgame();
-	//glutPostRedisplay();
+	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
 }
