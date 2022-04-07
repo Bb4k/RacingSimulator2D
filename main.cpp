@@ -8,16 +8,21 @@ GLdouble left_m = -100.0;
 GLdouble right_m = 700.0;
 GLdouble bottom_m = -140.0;
 GLdouble top_m = 460.0;
+
 double ok = 1;
-double j = 0.0;
+
+double car_pos_y = 0.0;
+double car_pos_x = 0.0;
+
 double i = 0.0;
+
 double contor = 0;
 double loc_vert = 800;
 int vector[3] = { 0, 160, 320 };
 double height = vector[rand() % 3];
 int score = 0;
 double timp = 0.15;
-int pct = 1000;
+int pct = 1000; // rata la care creste timpul
 double rsj, rdj, rss, rds = 0;
 
 void init(void)
@@ -38,7 +43,7 @@ void RenderString(float x, float y, void* font, const unsigned char* string)
 void startgame(void)
 {
 
-	if (height != j || (loc_vert > 90 || loc_vert < -90))
+	if (height != car_pos_y && loc_vert != car_pos_x)
 	{
 
 		if (i < -380)
@@ -130,14 +135,12 @@ void drawScene(void)
 
 	//desenam masina
 	glPushMatrix();
-	glTranslated(0.0, j, 0.0);
-
-
+	glTranslated(car_pos_x, car_pos_y, 0.0);
 
 	glColor3f(0.996, 0.365, 0.149);
-	glRecti(-45, -15, 45, 15);
+	glRecti(-45, -15, 45, 15); //dimensiunile dreptunghului
 
-	if (ok == 0)
+	if (ok == 0) //ceva neimplementat, probabil rotile
 	{
 		rsj = 8;
 		rss = -8;
@@ -153,13 +156,12 @@ void drawScene(void)
 		RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"GAME OVER");
 	}
 
-	if (contor == 1 && (j != 160 && j != 320))
-		j = j + 1;
-	else if (contor == -1 && (j != 160 && j != 0))
-		j = j - 1;
+	if (contor == 1 && (car_pos_y != 160 && car_pos_y != 320))
+		car_pos_y = car_pos_y + 1;
+	else if (contor == -1 && (car_pos_y != 160 && car_pos_y != 0))
+		car_pos_y = car_pos_y - 1;
 	else {
 		contor = 0;
-		
 	}
 
 	//desenam a doua masina (adversara)
@@ -190,45 +192,65 @@ void reshape(int w, int h)
 
 void miscasus(void)
 {
-	if (ok != 0)
-	{
-		if (j < 320)
+
+		if (car_pos_y < 320)
 		{
 			contor = 1;
-			j += 1;
+			car_pos_y += 1;
 		}
 
 		glutPostRedisplay();
-	}
 }
 
 void miscajos(void)
-{
-	if (ok != 0)
+{	
+
+	if (car_pos_y > 0)
 	{
-		if (j > 0)
-		{
-			contor = -1;
-			j -= 1;
-		}
+		contor = -1;
+		car_pos_y -= 1;
+	}
+		glutPostRedisplay();
+}
+
+void miscadreapta(void)
+{	
+	
+		if (car_pos_x < 700)
+			car_pos_x += 10;
 
 		glutPostRedisplay();
-	}
+	
+}
+
+void miscastanga(void)
+{	
+	
+		if (car_pos_x > 0)
+			car_pos_x -= 10;
+
+		glutPostRedisplay();
 }
 
 void keyboard(int key, int x, int y)
 {
-
-
-	switch (key) {
-	case GLUT_KEY_UP:
-		miscasus();
-		break;
-	case GLUT_KEY_DOWN:
-		miscajos();
-		break;
-
-	}
+	if (ok != 0)
+		switch (key) {
+			case GLUT_KEY_UP:
+				miscasus();
+				break;
+			case GLUT_KEY_DOWN:
+				miscajos();
+				break;
+			case GLUT_KEY_LEFT:
+				miscastanga();
+				break;
+			case GLUT_KEY_RIGHT:
+				miscadreapta();
+				break;
+			default: 
+				break;
+		}
 
 }
 
