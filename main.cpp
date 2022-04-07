@@ -1,5 +1,7 @@
 #include <iostream>
 #include <windows.h>
+#include <string>
+
 #include <GL/freeglut.h>
 
 using namespace std;
@@ -8,12 +10,13 @@ GLdouble left_m = -100.0;
 GLdouble right_m = 700.0;
 GLdouble bottom_m = -140.0;
 GLdouble top_m = 460.0;
+
 double ok = 1;
-double j = 0.0;
-double i = 0.0;
+double j = 0.0;  // in j muta masina de pe o banda pe alta smr
+double i = 0.0;  // in i face ceva related cu miscarea liniilor intrerupte in raport cu timpul, vezi l-118
 double contor = 0;
-double loc_vert = 800;
-int vector[3] = { 0, 160, 320 };
+double loc_vert = 800; //miscarea pe x a masinilor adverse smr
+int vector[3] = { 0, 160, 320 }; // pozitia pe y a masinilor adverse
 double height = vector[rand() % 3];
 int score = 0;
 double timp = 0.15;
@@ -92,7 +95,9 @@ void drawScene(void)
 	glVertex2i(700, 460); // Dreapta sus
 	glVertex2i(-100, 460);// Stanga sus
 	glEnd();
-	RenderString(200.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Depaseste masinile!");
+
+	RenderString(200.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Depaseste masinile! Scor:");
+	RenderString(455.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(score)).c_str());
 
 	// Delimitare sosea
 	glLineWidth(3);
@@ -112,8 +117,8 @@ void drawScene(void)
 
 	// Liniile intrerupte
 	glPushMatrix();
-	glTranslated(i, 0.0, 0.0);
-	
+	glTranslated(i, 0 , 0);
+
 
 	glBegin(GL_LINES);
 	glVertex2i(-100, 80);
@@ -133,13 +138,12 @@ void drawScene(void)
 	glTranslated(0.0, j, 0.0);
 
 
-
 	glColor3f(0.996, 0.365, 0.149);
 	glRecti(-45, -15, 45, 15);
 
 	if (ok == 0)
 	{
-		rsj = 8;
+		rsj = 8; //roata stanga jos smr
 		rss = -8;
 		rdj = -8;
 		rds = 8;
