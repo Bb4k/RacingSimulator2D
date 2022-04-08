@@ -34,6 +34,7 @@ GLdouble top_m = 460.0;
 #define MAIN_MENU 10
 #define OPTIONS 11
 #define INGAME 12
+#define SPLASH_SCREEN -1
 int _run = 1;
 int _win = 0;
 
@@ -100,7 +101,7 @@ void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* strin
 void startgame(void)
 {
 
-	Sleep(1); // t/dt fix kb lag imput
+	Sleep(1); // t/dt fix kb lag input
 
 	if (abs(c_car_pos_y - p_car_pos_y) > std::numeric_limits<double>::epsilon() + c_car_speed
 		|| abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
@@ -500,7 +501,7 @@ void options_screen() {
 /* TODO ome fade in/out graphic*/
 void splash_screen() {
 
-	screen = -1;
+	screen = SPLASH_SCREEN;
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
 	RenderString(280.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Bb4k");
@@ -508,7 +509,7 @@ void splash_screen() {
 	glutSwapBuffers();
 	glFlush();
 	Sleep(5);
-	glutDisplayFunc(main_menu);
+	//glutDisplayFunc(main_menu);
 }
 
 void misca_sus(void) {
@@ -589,6 +590,9 @@ void leftclick(int x, int y) {
 	case INGAME:
 		std::cout << "inside game left click";
 		break;
+	case SPLASH_SCREEN:
+		glutDisplayFunc(main_menu);
+		break;
 	default:
 		break;
 	}
@@ -604,6 +608,8 @@ void rightclick(int x, int y) {
 		break;
 	case INGAME:
 		std::cout << "inside game right click";
+		break;
+	case SPLASH_SCREEN:
 		break;
 	default:
 		break;
@@ -645,7 +651,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(keyboard);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(pre_start);
+	glutDisplayFunc(splash_screen);
 	glutReshapeFunc(reshape);
 
 
