@@ -61,7 +61,7 @@ int		c_car_pos_y_values[3] = { GRID_Y_LOWER, GRID_Y_MID, GRID_Y_UPPER };
 double	c_car_pos_y = c_car_pos_y_values[rand() % 3];
 double	c_car_speed = 1;
 
-double	x_car_pos_x = -300; 
+double	x_car_pos_x = -350; 
 
 // -- general game status --
 #define WIN_SCORE			20000
@@ -200,12 +200,154 @@ void draw_background() {
 	glPopMatrix();
 }
 
+void draw_x_car(int index) {
+
+	//body
+	glPushMatrix();
+	glTranslated(x_car_pos_x, 160.0, 0.0);
+
+	glPushMatrix();
+
+	glPushMatrix();
+	//wheels
+	//fl
+	glPushMatrix();
+	glTranslated(30, 20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//fr
+	glPushMatrix();
+	glTranslated(30, -20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//rl
+	glPushMatrix();
+	glTranslated(-30, 20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//rr
+	glPushMatrix();
+	glTranslated(-30, -20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	glPopMatrix();
+
+	//body
+	glPushMatrix();
+	glColor3f((GLfloat)0.0, (GLfloat)0.2, (GLfloat)0.7);
+	glRecti(-50, -20, 50, 20);
+	glPopMatrix();
+
+	//windshield
+	glPushMatrix();
+	glTranslated(15, 0, 0.0);
+	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+	glRecti(-15, -15, 15, 15);
+	glPopMatrix();
+	//roof
+	glPushMatrix();
+	glTranslated(-5, 0, 0.0);
+	glColor3f((GLfloat)0.2, (GLfloat)0.5, (GLfloat)1);
+	glRecti(-15, -15, 15, 15);
+	glPopMatrix();
+	//rearwindow
+	glPushMatrix();
+	glTranslated(-25, 0, 0.0);
+	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+	glRecti(-5, -15, 5, 15);
+	glPopMatrix();
+
+	//circoblitz
+	glPushMatrix();
+	glTranslated(5, 7, 0.0);
+	glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
+	if (index % 3 == 0)
+		glRecti(-12, -12, 12, 12);
+	else
+		glRecti(-10, -10, 10, 10);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslated(5, -7, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
+	if (index % 3 != 0)
+		glRecti(-12, -12, 12, 12);
+	else
+		glRecti(-10, -10, 10, 10);
+	glPopMatrix();
+
+	glPopMatrix();
+	glPopMatrix();
+}
+
 void draw_p_car() {
 
 	glPushMatrix();
-	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
 
+	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
 	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
+	
+	glPushMatrix();
+	//wheels
+		//fl
+	glPushMatrix();
+		glTranslated(30, 20, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+		glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//fr
+	glPushMatrix();
+		glTranslated( 30, -20, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+		glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//rl
+	glPushMatrix();
+		glTranslated(-30, 20, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+		glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//rr
+	glPushMatrix();
+		glTranslated(-30, -20, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+		glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+
+	//car_body
+	glPushMatrix();
+		glTranslated(0, 0, 0.0);
+		glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
+		glRecti(-50, -20, 50, 20);
+	glPopMatrix();
+
+
+	//windshield
+	glPushMatrix();
+		glTranslated(15, 0, 0.0);
+		glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+		glRecti(-15, -15, 15, 15);
+	glPopMatrix();
+	//roof
+	glPushMatrix();
+		glTranslated(-5, 0, 0.0);
+		glColor3f((GLfloat)0.9, (GLfloat)0.2, (GLfloat)0.2);
+		glRecti(-15, -15, 15, 15);
+	glPopMatrix();
+	//rearwindow
+	glPushMatrix();
+		glTranslated(-25, 0, 0.0);
+		glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+		glRecti(-5, -15, 5, 15);
+	glPopMatrix();
+
+	glPopMatrix();
+
+	glPopMatrix();
 
 	// --- move car to logical grid positions while position != any grid position x or y
 	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
@@ -240,8 +382,7 @@ void draw_p_car() {
 		action_speed = 0;
 		p_car_moving_x = 0;
 	}
-	glRecti(-50, -20, 50, 20); //dimensiunile dreptunghului
-	glPopMatrix();
+
 }
 void draw_c_car() {
 	//desenam a doua masina (adversara)
@@ -307,7 +448,7 @@ int dialogue = 0;
 int sec_anim = 0;
 int index = 0;
 int next_chr = 0;
-char text[8] = "MAICATA";
+char text[27] = "CATCH ME IF YOU CAN HAHAHA";
 char aux[] = "";
 
 void pre_start(void) {
@@ -317,45 +458,25 @@ void pre_start(void) {
 	draw_background();
 	Sleep(1);
 	if (first_anim == 1) {
+	
+		glPopMatrix();
+		draw_p_car();
 		glPushMatrix();
-		glTranslated(p_car_pos_x, 160.0, 0.0);
-		glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-		glRecti(-50, -20, 50, 20);
-		if (p_car_pos_x != GRID_X_MID) 
+
+		glPushMatrix();
+		draw_x_car(index);
+		glPopMatrix();
+
+
+		if (p_car_pos_x != GRID_X_MID)
 			p_car_pos_x = p_car_pos_x + 0.5;
 		else {
 			dialogue = 1;
 			first_anim = 0;
 		}
-		glPopMatrix();
 
-		glPushMatrix();
-		glTranslated(x_car_pos_x, 160.0, 0.0);
-		glColor3f((GLfloat)0.0, (GLfloat)0.2, (GLfloat)0.7);
-		glRecti(-45, -15, 45, 15);
 		if (x_car_pos_x != GRID_X_LEFT)
 			x_car_pos_x = x_car_pos_x + 0.5;
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(x_car_pos_x+5, 167.0, 0.0);
-		glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
-		if (index % 3 == 0)
-			glRecti(-12, -12, 12, 12);
-		else
-			glRecti(-10, -10, 10, 10);
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(x_car_pos_x+5, 153.0, 0.0);
-		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
-		if (index % 3 != 0)
-			glRecti(-12, -12, 12, 12);
-		else
-			glRecti(-10, -10, 10, 10);
-		glPopMatrix();
-
-		
 	}
 
 	if (dialogue == 1) {
@@ -381,9 +502,9 @@ void pre_start(void) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		draw_background();
 		glPushMatrix();
-		glTranslated(p_car_pos_x, 160.0, 0.0);
-		glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-		glRecti(-50, -20, 50, 20);
+		
+		draw_p_car();
+		
 		if (p_car_pos_x != GRID_X_LEFT) 
 			p_car_pos_x = p_car_pos_x - 0.5;
 		else 
@@ -651,7 +772,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(keyboard);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(splash_screen);
+	glutDisplayFunc(pre_start);
 	glutReshapeFunc(reshape);
 
 
