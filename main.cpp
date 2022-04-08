@@ -75,8 +75,6 @@ int		powerup_pos_y = 0;
 int		powerup_size = 20;
 int		powerup_time_on = 5; //seconds
 
-// -- ??? --
-double rsj, rdj, rss, rds = 0; //?
 
 double street_line = 1000;
 
@@ -100,8 +98,9 @@ void startgame(void){
 
 	Sleep(1); // t/dt fix kb lag input
 
-	if (abs(c_car_pos_y - p_car_pos_y) > std::numeric_limits<double>::epsilon() + c_car_speed
-		|| abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
+	//  std::numeric_limits<double>::epsilon() eroarea la trunchiere numar virgula mobila 1.0000..001123
+	if (	abs(c_car_pos_y - p_car_pos_y) > std::numeric_limits<double>::epsilon() + c_car_speed
+		||	abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
 
 		c_car_pos_x -= c_car_speed + action_speed;
 		
@@ -260,8 +259,12 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 
 	glPopMatrix();
 }
-void draw_x_car(int index) {
 
+
+// - masina politite inceput --
+void draw_x_car(int index) {
+	
+	glPushMatrix();
 	draw_car(x_car_pos_x, 160.0, 0.1, 0.5, 0.7);
 //circoblitz
 	glPushMatrix();
@@ -287,6 +290,7 @@ void draw_x_car(int index) {
 	glPopMatrix();
 }
 
+// -- masina playerului --
 void draw_p_car() {
 
 	glPushMatrix();
@@ -330,6 +334,7 @@ void draw_p_car() {
 
 
 }
+// -- masinia din contrasens --
 void draw_c_car() {
 	glPushMatrix();
 		glPushMatrix();
@@ -353,8 +358,6 @@ void draw_powerup() {
 		powerup_gen = 0;
 
 }
-
-
 
 void draw_scene(void)
 {
@@ -694,7 +697,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(keyboard);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(pre_start);
+	glutDisplayFunc(splash_screen);
 	glutReshapeFunc(reshape);
 
 
