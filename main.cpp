@@ -200,17 +200,16 @@ void draw_background() {
 	glPopMatrix();
 }
 
-void draw_x_car(int index) {
 
-	//body
-	glPushMatrix();
-	glTranslated(x_car_pos_x, 160.0, 0.0);
-
+void draw_car(double x_car_pos, double y_car_pos) {
 	glPushMatrix();
 
+	glTranslated(x_car_pos, y_car_pos, 0.0);
+
 	glPushMatrix();
+
 	//wheels
-	//fl
+		//fl
 	glPushMatrix();
 	glTranslated(30, 20, 0.0);
 	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
@@ -248,12 +247,14 @@ void draw_x_car(int index) {
 	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
 	glRecti(-15, -15, 15, 15);
 	glPopMatrix();
+
 	//roof
 	glPushMatrix();
 	glTranslated(-5, 0, 0.0);
 	glColor3f((GLfloat)0.2, (GLfloat)0.5, (GLfloat)1);
 	glRecti(-15, -15, 15, 15);
 	glPopMatrix();
+
 	//rearwindow
 	glPushMatrix();
 	glTranslated(-25, 0, 0.0);
@@ -261,9 +262,14 @@ void draw_x_car(int index) {
 	glRecti(-5, -15, 5, 15);
 	glPopMatrix();
 
-	//circoblitz
+	glPopMatrix();
+}
+void draw_x_car(int index) {
+
+	draw_car(x_car_pos_x, 160.0);
+//circoblitz
 	glPushMatrix();
-	glTranslated(5, 7, 0.0);
+	glTranslated(x_car_pos_x + 5, 167, 0.0);
 	glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
 	if (index % 3 == 0)
 		glRecti(-12, -12, 12, 12);
@@ -272,7 +278,7 @@ void draw_x_car(int index) {
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslated(5, -7, 0.0);
+	glTranslated(x_car_pos_x + 5, 153, 0.0);
 	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
 	if (index % 3 != 0)
 		glRecti(-12, -12, 12, 12);
@@ -281,6 +287,7 @@ void draw_x_car(int index) {
 	glPopMatrix();
 
 	glPopMatrix();
+
 	glPopMatrix();
 }
 
@@ -288,9 +295,42 @@ void draw_p_car() {
 
 	glPushMatrix();
 
+	// --- move car to logical grid positions while position != any grid position x or y
+	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
+		p_car_pos_y = p_car_pos_y + 1;
+		glRotated(3, 0, 0, 1);
+		p_car_moving_y = 1;
+	}
+	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
+		p_car_pos_y = p_car_pos_y - 1;
+		glRotated(-3, 0, 0, 1);
+		p_car_moving_y = 1;
+	}
+	else {
+		glRotated(0, 0, 0, 1);
+		contor_y = 0;
+		p_car_moving_y = 0;
+	}
+
+	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
+		p_car_pos_x = p_car_pos_x + 1;
+		action_speed = 0.5;
+		p_car_moving_x = 1;
+	}
+	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
+		p_car_pos_x = p_car_pos_x - 1;
+		action_speed = -0.5;
+		p_car_moving_x = 1;
+	}
+	else {
+		contor_x = 0;
+		action_speed = 0;
+		p_car_moving_x = 0;
+	}
+
 	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
 	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-	
+
 	glPushMatrix();
 	//wheels
 		//fl
@@ -346,50 +386,70 @@ void draw_p_car() {
 	glPopMatrix();
 
 	glPopMatrix();
-
 	glPopMatrix();
-
-	// --- move car to logical grid positions while position != any grid position x or y
-	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
-		p_car_pos_y = p_car_pos_y + 1;
-		glRotated(5, 0, 0, 1);
-		p_car_moving_y = 1;
-	}
-	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
-		p_car_pos_y = p_car_pos_y - 1;
-		glRotated(-5, 0, 0, 1);
-		p_car_moving_y = 1;
-
-	}
-	else {
-		glRotated(0, 0, 0, 1);
-		contor_y = 0;
-		p_car_moving_y = 0;
-	}
-
-	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
-		p_car_pos_x = p_car_pos_x + 1;
-		action_speed = 0.5;
-		p_car_moving_x = 1;
-	}
-	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
-		p_car_pos_x = p_car_pos_x - 1;
-		action_speed = -0.5;
-		p_car_moving_x = 1;
-	}
-	else {
-		contor_x = 0;
-		action_speed = 0;
-		p_car_moving_x = 0;
-	}
 
 }
 void draw_c_car() {
 	//desenam a doua masina (adversara)
 	glPushMatrix();
 	glTranslated(c_car_pos_x, c_car_pos_y, 0.0);
-	glColor3f((GLfloat)0.471, (GLfloat)0.667, (GLfloat)0.949);
-	glRecti(-45, -15, 45, 15);
+	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
+
+	glPushMatrix();
+	//wheels
+		//fl
+	glPushMatrix();
+	glTranslated(30, 20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//fr
+	glPushMatrix();
+	glTranslated(30, -20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//rl
+	glPushMatrix();
+	glTranslated(-30, 20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+	//rr
+	glPushMatrix();
+	glTranslated(-30, -20, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
+	glRecti(-10, -5, 10, 5);
+	glPopMatrix();
+
+	//car_body
+	glPushMatrix();
+	glTranslated(0, 0, 0.0);
+	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
+	glRecti(-50, -20, 50, 20);
+	glPopMatrix();
+
+
+	//windshield
+	glPushMatrix();
+	glTranslated(15, 0, 0.0);
+	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+	glRecti(-15, -15, 15, 15);
+	glPopMatrix();
+	//roof
+	glPushMatrix();
+	glTranslated(-5, 0, 0.0);
+	glColor3f((GLfloat)0.9, (GLfloat)0.2, (GLfloat)0.2);
+	glRecti(-15, -15, 15, 15);
+	glPopMatrix();
+	//rearwindow
+	glPushMatrix();
+	glTranslated(-25, 0, 0.0);
+	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+	glRecti(-5, -15, 5, 15);
+	glPopMatrix();
+
+	glPopMatrix();
 	glPopMatrix();
 }
 void draw_powerup() {
@@ -499,45 +559,22 @@ void pre_start(void) {
 	}	
 	++index;
 	if (sec_anim == 1) {
-		glClear(GL_COLOR_BUFFER_BIT);
-		draw_background();
+
 		glPushMatrix();
-		
-		draw_p_car();
-		
-		if (p_car_pos_x != GRID_X_LEFT) 
+			draw_p_car();
+		glPopMatrix();
+
+		glPushMatrix();
+			draw_x_car(index);
+		glPopMatrix();
+
+		if (p_car_pos_x != GRID_X_LEFT)
 			p_car_pos_x = p_car_pos_x - 0.5;
-		else 
+		else
 			sec_anim = 0;
-	
-		glPopMatrix();
 
-		glPushMatrix();
-		glTranslated(x_car_pos_x, 160.0, 0.0);
-		glColor3f((GLfloat)0.0, (GLfloat)0.2, (GLfloat)0.7);
-		glRecti(-45, -15, 45, 15);
 		if (x_car_pos_x > -200)
-			x_car_pos_x = x_car_pos_x - 0.6;
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(x_car_pos_x + 5, 167.0, 0.0);
-		glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
-		if (index % 3 == 0)
-			glRecti(-12, -12, 12, 12);
-		else
-			glRecti(-10, -10, 10, 10);
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(x_car_pos_x + 5, 153.0, 0.0);
-		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
-		if (index % 3 != 0)
-			glRecti(-12, -12, 12, 12);
-		else
-			glRecti(-10, -10, 10, 10);
-		glPopMatrix();
-
+			x_car_pos_x = x_car_pos_x - 0.5;
 	}
 
 
