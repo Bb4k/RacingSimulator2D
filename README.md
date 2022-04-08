@@ -4,15 +4,14 @@
 
 ### 8 p:aspecte "punctuale"
 
-- [ ] utilizarea primitivelor;
-- [ ] utilizarea transformarilor (indicate cu functii standard sau folosind matrice);
-- [ ] compunerea transformarilor; 
-- [ ] stive de matrice;
+- [x] utilizarea primitivelor;
+- [x] utilizarea transformarilor (indicate cu functii standard sau folosind matrice);
+- [ ] compunerea transformarilor; stive de matrice;
 - [ ] input interactiv (utilizare mouse, citire date din fisier/de la consola)
 
 ### 4p:
 
-- [ ] originalitate, caracter inovativ, grad de elaborare
+- [x] originalitate, caracter inovativ, grad de elaborare
 
 ### 3p:
 
