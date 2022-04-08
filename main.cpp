@@ -80,16 +80,14 @@ double rsj, rdj, rss, rds = 0; //?
 
 double street_line = 1000;
 
-void init(void)
-{
+void init(void){
 	glClearColor((GLclampf)0.98, (GLclampf)0.929, (GLclampf)0.792, (GLclampf)0.0);
 	glMatrixMode(GL_PROJECTION);
 	glShadeModel(GL_SMOOTH);
 	glOrtho(left_m, right_m, bottom_m, top_m, -1.0, 1.0);
 }
 
-void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* string)
-{
+void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* string){
 
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glRasterPos2f((GLfloat)x, (GLfloat)y);
@@ -98,8 +96,7 @@ void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* strin
 }
 
 
-void startgame(void)
-{
+void startgame(void){
 
 	Sleep(1); // t/dt fix kb lag input
 
@@ -201,8 +198,7 @@ void draw_background() {
 }
 
 
-void draw_car(double x_car_pos, double y_car_pos) {
-	glPushMatrix();
+void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) {
 
 	glTranslated(x_car_pos, y_car_pos, 0.0);
 
@@ -237,7 +233,7 @@ void draw_car(double x_car_pos, double y_car_pos) {
 
 	//body
 	glPushMatrix();
-	glColor3f((GLfloat)0.0, (GLfloat)0.2, (GLfloat)0.7);
+	glColor3f((GLfloat)r, (GLfloat)g, (GLfloat)b);
 	glRecti(-50, -20, 50, 20);
 	glPopMatrix();
 
@@ -251,7 +247,7 @@ void draw_car(double x_car_pos, double y_car_pos) {
 	//roof
 	glPushMatrix();
 	glTranslated(-5, 0, 0.0);
-	glColor3f((GLfloat)0.2, (GLfloat)0.5, (GLfloat)1);
+	glColor3f((GLfloat)r+0.1, (GLfloat)g+0.1, (GLfloat)b+0.1);
 	glRecti(-15, -15, 15, 15);
 	glPopMatrix();
 
@@ -266,7 +262,7 @@ void draw_car(double x_car_pos, double y_car_pos) {
 }
 void draw_x_car(int index) {
 
-	draw_car(x_car_pos_x, 160.0);
+	draw_car(x_car_pos_x, 160.0, 0.1, 0.5, 0.7);
 //circoblitz
 	glPushMatrix();
 	glTranslated(x_car_pos_x + 5, 167, 0.0);
@@ -294,6 +290,8 @@ void draw_x_car(int index) {
 void draw_p_car() {
 
 	glPushMatrix();
+	glPushMatrix();
+	draw_car(p_car_pos_x, p_car_pos_y, 0.996, 0.365, 0.149);
 
 	// --- move car to logical grid positions while position != any grid position x or y
 	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
@@ -327,129 +325,16 @@ void draw_p_car() {
 		action_speed = 0;
 		p_car_moving_x = 0;
 	}
-
-	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
-	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-
-	glPushMatrix();
-	//wheels
-		//fl
-	glPushMatrix();
-		glTranslated(30, 20, 0.0);
-		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-		glRecti(-10, -5, 10, 5);
 	glPopMatrix();
-	//fr
-	glPushMatrix();
-		glTranslated( 30, -20, 0.0);
-		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-		glRecti(-10, -5, 10, 5);
-	glPopMatrix();
-	//rl
-	glPushMatrix();
-		glTranslated(-30, 20, 0.0);
-		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-		glRecti(-10, -5, 10, 5);
-	glPopMatrix();
-	//rr
-	glPushMatrix();
-		glTranslated(-30, -20, 0.0);
-		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-		glRecti(-10, -5, 10, 5);
 	glPopMatrix();
 
-	//car_body
-	glPushMatrix();
-		glTranslated(0, 0, 0.0);
-		glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-		glRecti(-50, -20, 50, 20);
-	glPopMatrix();
-
-
-	//windshield
-	glPushMatrix();
-		glTranslated(15, 0, 0.0);
-		glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
-		glRecti(-15, -15, 15, 15);
-	glPopMatrix();
-	//roof
-	glPushMatrix();
-		glTranslated(-5, 0, 0.0);
-		glColor3f((GLfloat)0.9, (GLfloat)0.2, (GLfloat)0.2);
-		glRecti(-15, -15, 15, 15);
-	glPopMatrix();
-	//rearwindow
-	glPushMatrix();
-		glTranslated(-25, 0, 0.0);
-		glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
-		glRecti(-5, -15, 5, 15);
-	glPopMatrix();
-
-	glPopMatrix();
-	glPopMatrix();
 
 }
 void draw_c_car() {
-	//desenam a doua masina (adversara)
 	glPushMatrix();
-	glTranslated(c_car_pos_x, c_car_pos_y, 0.0);
-	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-
-	glPushMatrix();
-	//wheels
-		//fl
-	glPushMatrix();
-	glTranslated(30, 20, 0.0);
-	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-	glRecti(-10, -5, 10, 5);
-	glPopMatrix();
-	//fr
-	glPushMatrix();
-	glTranslated(30, -20, 0.0);
-	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-	glRecti(-10, -5, 10, 5);
-	glPopMatrix();
-	//rl
-	glPushMatrix();
-	glTranslated(-30, 20, 0.0);
-	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-	glRecti(-10, -5, 10, 5);
-	glPopMatrix();
-	//rr
-	glPushMatrix();
-	glTranslated(-30, -20, 0.0);
-	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
-	glRecti(-10, -5, 10, 5);
-	glPopMatrix();
-
-	//car_body
-	glPushMatrix();
-	glTranslated(0, 0, 0.0);
-	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
-	glRecti(-50, -20, 50, 20);
-	glPopMatrix();
-
-
-	//windshield
-	glPushMatrix();
-	glTranslated(15, 0, 0.0);
-	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
-	glRecti(-15, -15, 15, 15);
-	glPopMatrix();
-	//roof
-	glPushMatrix();
-	glTranslated(-5, 0, 0.0);
-	glColor3f((GLfloat)0.9, (GLfloat)0.2, (GLfloat)0.2);
-	glRecti(-15, -15, 15, 15);
-	glPopMatrix();
-	//rearwindow
-	glPushMatrix();
-	glTranslated(-25, 0, 0.0);
-	glColor3f((GLfloat)0.7, (GLfloat)1, (GLfloat)1);
-	glRecti(-5, -15, 5, 15);
-	glPopMatrix();
-
-	glPopMatrix();
+		glPushMatrix();
+		draw_car(c_car_pos_x, c_car_pos_y, 0.7, 0.2, 0.2);
+		glPopMatrix();
 	glPopMatrix();
 }
 void draw_powerup() {
