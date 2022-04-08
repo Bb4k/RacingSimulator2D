@@ -43,8 +43,8 @@ int mouse_x = 0;
 int mouse_y = 0;
 
 // -- p(layer)_car status --
-double	p_car_pos_y = 0.0;
-double	p_car_pos_x = 0.0;
+double	p_car_pos_y = GRID_Y_MID;
+double	p_car_pos_x = -200.0;
 int		p_car_powerup = 0;
 int		p_car_pos_x_values[3] = { GRID_X_LEFT, GRID_X_MID, GRID_X_RIGHT };
 int		p_car_moving_x = 0;
@@ -59,6 +59,8 @@ double	c_car_pos_x = 800; //start position of car (inversely proportional to tim
 int		c_car_pos_y_values[3] = { GRID_Y_LOWER, GRID_Y_MID, GRID_Y_UPPER };
 double	c_car_pos_y = c_car_pos_y_values[rand() % 3];
 double	c_car_speed = 1;
+
+double	x_car_pos_x = -300; 
 
 // -- general game status --
 #define WIN_SCORE			20000
@@ -75,21 +77,21 @@ int		powerup_time_on = 5; //seconds
 // -- ??? --
 double rsj, rdj, rss, rds = 0; //?
 
-int street_line = 1000;
+double street_line = 1000;
 
 void init(void)
 {
-	glClearColor(0.98, 0.929, 0.792, 0.0);
+	glClearColor((GLclampf)0.98, (GLclampf)0.929, (GLclampf)0.792, (GLclampf)0.0);
 	glMatrixMode(GL_PROJECTION);
 	glShadeModel(GL_SMOOTH);
 	glOrtho(left_m, right_m, bottom_m, top_m, -1.0, 1.0);
 }
 
-void RenderString(float x, float y, void* font, const unsigned char* string)
+void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* string)
 {
 
 	glColor3f(0.0f, 0.0f, 0.0f);
-	glRasterPos2f(x, y);
+	glRasterPos2f((GLfloat)x, (GLfloat)y);
 	glutBitmapString(font, string);
 
 }
@@ -104,10 +106,7 @@ void startgame(void)
 		|| abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
 
 		c_car_pos_x -= c_car_speed + action_speed;
-		street_line -= 2*c_car_speed;
-
-		if (street_line < -1000)
-			street_line = 1000;
+		
 
 		if (c_car_pos_x < -150) {
 			p_score += 100;
@@ -142,8 +141,11 @@ void startgame(void)
 }
 
 void draw_background() {
-	glColor3f(0.55, 0.788, 0.451);
+	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+	street_line -= (int)(2 * c_car_speed) + 0.1;
 
+	if (street_line < -1000)
+		street_line = 1000;
 	// Iarba de jos
 	glBegin(GL_POLYGON);
 	glVertex2i(-100, -140);// Stanga jos
@@ -202,7 +204,7 @@ void draw_p_car() {
 	glPushMatrix();
 	glTranslated(p_car_pos_x, p_car_pos_y, 0.0);
 
-	glColor3f(0.996, 0.365, 0.149);
+	glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
 
 	// --- move car to logical grid positions while position != any grid position x or y
 	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
@@ -244,7 +246,7 @@ void draw_c_car() {
 	//desenam a doua masina (adversara)
 	glPushMatrix();
 	glTranslated(c_car_pos_x, c_car_pos_y, 0.0);
-	glColor3f(0.471, 0.667, 0.949);
+	glColor3f((GLfloat)0.471, (GLfloat)0.667, (GLfloat)0.949);
 	glRecti(-45, -15, 45, 15);
 	glPopMatrix();
 }
@@ -264,6 +266,8 @@ void draw_powerup() {
 		powerup_gen = 0;
 
 }
+
+
 
 void draw_scene(void)
 {
@@ -294,11 +298,134 @@ void draw_scene(void)
 
 	glutPostRedisplay();
 	glutSwapBuffers();
-
 	glFlush();
 }
 
+int first_anim = 1;
+int dialogue = 0;
+int sec_anim = 0;
+int index = 0;
+int next_chr = 0;
+char text[8] = "MAICATA";
+char aux[] = "";
 
+void pre_start(void) {
+	
+	if(first_anim || sec_anim)
+		glClear(GL_COLOR_BUFFER_BIT);
+	draw_background();
+	Sleep(1);
+	if (first_anim == 1) {
+		glPushMatrix();
+		glTranslated(p_car_pos_x, 160.0, 0.0);
+		glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
+		glRecti(-50, -20, 50, 20);
+		if (p_car_pos_x != GRID_X_MID) 
+			p_car_pos_x = p_car_pos_x + 0.5;
+		else {
+			dialogue = 1;
+			first_anim = 0;
+		}
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(x_car_pos_x, 160.0, 0.0);
+		glColor3f((GLfloat)0.0, (GLfloat)0.2, (GLfloat)0.7);
+		glRecti(-45, -15, 45, 15);
+		if (x_car_pos_x != GRID_X_LEFT)
+			x_car_pos_x = x_car_pos_x + 0.5;
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(x_car_pos_x+5, 167.0, 0.0);
+		glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
+		if (index % 3 == 0)
+			glRecti(-12, -12, 12, 12);
+		else
+			glRecti(-10, -10, 10, 10);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(x_car_pos_x+5, 153.0, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
+		if (index % 3 != 0)
+			glRecti(-12, -12, 12, 12);
+		else
+			glRecti(-10, -10, 10, 10);
+		glPopMatrix();
+
+		
+	}
+
+	if (dialogue == 1) {
+		draw_background();
+		if (next_chr <= strlen(text)) {
+			if (index % 10 == 0) {
+				strncpy(aux, text, next_chr);
+				RenderString(300, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)aux);
+				Sleep(100);
+				++next_chr;
+			}
+			++index;
+		}
+		else {
+			Sleep(1000);
+			dialogue = 0;
+			first_anim = 0;
+			sec_anim = 1;
+		}
+	}	
+	++index;
+	if (sec_anim == 1) {
+		glClear(GL_COLOR_BUFFER_BIT);
+		draw_background();
+		glPushMatrix();
+		glTranslated(p_car_pos_x, 160.0, 0.0);
+		glColor3f((GLfloat)0.996, (GLfloat)0.365, (GLfloat)0.149);
+		glRecti(-50, -20, 50, 20);
+		if (p_car_pos_x != GRID_X_LEFT) 
+			p_car_pos_x = p_car_pos_x - 0.5;
+		else 
+			sec_anim = 0;
+	
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(x_car_pos_x, 160.0, 0.0);
+		glColor3f((GLfloat)0.0, (GLfloat)0.2, (GLfloat)0.7);
+		glRecti(-45, -15, 45, 15);
+		if (x_car_pos_x > -200)
+			x_car_pos_x = x_car_pos_x - 0.6;
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(x_car_pos_x + 5, 167.0, 0.0);
+		glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
+		if (index % 3 == 0)
+			glRecti(-12, -12, 12, 12);
+		else
+			glRecti(-10, -10, 10, 10);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(x_car_pos_x + 5, 153.0, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
+		if (index % 3 != 0)
+			glRecti(-12, -12, 12, 12);
+		else
+			glRecti(-10, -10, 10, 10);
+		glPopMatrix();
+
+	}
+
+
+	if (!first_anim && !sec_anim && !dialogue)
+		glutDisplayFunc(draw_scene);
+
+	glutPostRedisplay();
+	glutSwapBuffers();
+	glFlush();
+}
 
 void reshape(int w, int h)
 {
@@ -318,16 +445,16 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 	glPushMatrix();
 	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
 
-	if (mouse_x > btn_pos_x && mouse_x < btn_pos_x + 2 * btn_w &&
+	if (mouse_x > btn_pos_x && mouse_x < btn_pos_x + 2.0 * btn_w &&
 		mouse_y > top_m - btn_pos_y - btn_h && mouse_y < top_m - btn_pos_y + btn_h) {
 		glColor3f((GLdouble)0, (GLdouble)0.5, (GLdouble)0);
 		glRecti(-btn_w - 5, -btn_h - 5, btn_w - 5, btn_h - 5);
-		RenderString(-btn_w / 2 - GLdouble(sizeof(str) / sizeof(char) / 4) - 5, -btn_h / 2 - 5, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
+		RenderString( (GLdouble)(-btn_w)/2 - (GLdouble)((sizeof(*str) / sizeof(char))/4 - (GLdouble)5) , (GLdouble)((GLdouble)-btn_h / 2 -(GLdouble)5), GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
 	}
 	else {
-		glColor3f((GLdouble)0.55, (GLdouble)0.788, (GLdouble)0.451);
+		glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
 		glRecti(-btn_w, -btn_h, btn_w, btn_h);
-		RenderString(-btn_w / 2 - GLdouble(sizeof(str) / sizeof(char) / 4), -btn_h / 2, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
+		RenderString( (GLdouble)(-btn_w)/2 - GLdouble(sizeof(*str) / sizeof(char))/4, (GLdouble)-btn_h / 2, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
 	}
 	glPopMatrix();
 }
@@ -359,7 +486,7 @@ void options_screen() {
 
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0.55, 0.788, 0.451);
+	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
 
 
 	// -- start button --
@@ -375,7 +502,7 @@ void splash_screen() {
 
 	screen = -1;
 	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0.55, 0.788, 0.451);
+	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
 	RenderString(280.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Bb4k");
 	RenderString(200.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Click anywhere to enter game...");
 	glutSwapBuffers();
@@ -417,7 +544,7 @@ void misca_stanga(void)
 void keyboard(int key, int x, int y)
 {	
 
-		switch (key) {
+	switch (key) {
 		case GLUT_KEY_UP:
 			if (!p_car_moving_y)
 				misca_sus();
@@ -436,7 +563,7 @@ void keyboard(int key, int x, int y)
 			break;
 		default:
 			break;
-		}
+	}
 }
 
 void leftclick(int x, int y) {
@@ -444,7 +571,7 @@ void leftclick(int x, int y) {
 	case MAIN_MENU:
 		std::cout << "inside main menu left click";
 		if (x > 300 && x < 500 && y > 140 && y < 180) {
-			glutDisplayFunc(draw_scene);
+			glutDisplayFunc(pre_start);
 			break;
 		}
 		if (x > 300 && x < 500 && y > 240 && y < 280) {
@@ -518,7 +645,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(keyboard);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(splash_screen);
+	glutDisplayFunc(pre_start);
 	glutReshapeFunc(reshape);
 
 
