@@ -47,6 +47,8 @@ double	p_car_pos_y = 0.0;
 double	p_car_pos_x = 0.0;
 int		p_car_powerup = 0;
 int		p_car_pos_x_values[3] = { GRID_X_LEFT, GRID_X_MID, GRID_X_RIGHT };
+int		p_car_moving_x = 0;
+int		p_car_moving_y = 0;
 // -- used for swift animation from one grid area to another
 int		contor_y = 0; // increase/decrease contor relative to start position 
 int		contor_x = 0;
@@ -59,7 +61,7 @@ double	c_car_pos_y = c_car_pos_y_values[rand() % 3];
 double	c_car_speed = 1;
 
 // -- general game status --
-#define WIN_SCORE			2000
+#define WIN_SCORE			20000
 int		p_score = 0;
 int		pts_to_speed_incr = 100;	// speed increase rate
 double	action_speed = 0;	// when accel/brake speedup/slowdown everythng a bit to seem more realistic
@@ -102,9 +104,9 @@ void startgame(void)
 		|| abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
 
 		c_car_pos_x -= c_car_speed + action_speed;
-		street_line -= (c_car_speed + 0.5 + action_speed);
+		street_line -= 2*c_car_speed;
 
-		if (street_line < -1200)
+		if (street_line < -1000)
 			street_line = 1000;
 
 		if (c_car_pos_x < -150) {
@@ -206,28 +208,34 @@ void draw_p_car() {
 	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
 		p_car_pos_y = p_car_pos_y + 1;
 		glRotated(5, 0, 0, 1);
+		p_car_moving_y = 1;
 	}
 	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
 		p_car_pos_y = p_car_pos_y - 1;
 		glRotated(-5, 0, 0, 1);
+		p_car_moving_y = 1;
 
 	}
 	else {
 		glRotated(0, 0, 0, 1);
 		contor_y = 0;
+		p_car_moving_y = 0;
 	}
 
 	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
 		p_car_pos_x = p_car_pos_x + 1;
-		action_speed = 0.2;
+		action_speed = 0.5;
+		p_car_moving_x = 1;
 	}
 	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
 		p_car_pos_x = p_car_pos_x - 1;
-		action_speed = -0.2;
+		action_speed = -0.5;
+		p_car_moving_x = 1;
 	}
 	else {
 		contor_x = 0;
 		action_speed = 0;
+		p_car_moving_x = 0;
 	}
 	glRecti(-50, -20, 50, 20); //dimensiunile dreptunghului
 	glPopMatrix();
@@ -407,23 +415,28 @@ void misca_stanga(void)
 	glutPostRedisplay();
 }
 void keyboard(int key, int x, int y)
-{
-	switch (key) {
-	case GLUT_KEY_UP:
-		misca_sus();
-		break;
-	case GLUT_KEY_DOWN:
-		misca_jos();
-		break;
-	case GLUT_KEY_LEFT:
-		misca_stanga();
-		break;
-	case GLUT_KEY_RIGHT:
-		misca_dreapta();
-		break;
-	default:
-		break;
-	}
+{	
+
+		switch (key) {
+		case GLUT_KEY_UP:
+			if (!p_car_moving_y)
+				misca_sus();
+			break;
+		case GLUT_KEY_DOWN:
+			if(!p_car_moving_y)
+				misca_jos();
+			break;
+		case GLUT_KEY_LEFT:
+			if (!p_car_moving_x)
+				misca_stanga();
+			break;
+		case GLUT_KEY_RIGHT:
+			if (!p_car_moving_x)
+				misca_dreapta();
+			break;
+		default:
+			break;
+		}
 }
 
 void leftclick(int x, int y) {
@@ -505,7 +518,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(keyboard);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(main_menu);
+	glutDisplayFunc(splash_screen);
 	glutReshapeFunc(reshape);
 
 
