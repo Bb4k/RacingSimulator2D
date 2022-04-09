@@ -21,7 +21,7 @@ GLdouble right_m = 700.0;
 GLdouble bottom_m = -140.0;
 GLdouble top_m = 460.0;
 
-// -- logic game grid -
+// -- logic game grid --
 #define GRID_Y_LOWER	0
 #define GRID_Y_MID		160
 #define GRID_Y_UPPER	320
@@ -31,10 +31,13 @@ GLdouble top_m = 460.0;
 #define GRID_X_RIGHT	600
 
 // -- app --
-#define MAIN_MENU 10
-#define OPTIONS 11
-#define INGAME 12
-#define SPLASH_SCREEN -1
+#define MAIN_MENU		10
+#define OPTIONS			11
+#define IN_GAME			12
+#define LEAD_B			13
+#define PRE_GAME		14
+#define SPLASH_SCREEN	-1
+int _prev_scr = -1;
 int _run = 1;
 int _win = 0;
 
@@ -47,7 +50,11 @@ int mouse_y = 0;
 double	p_car_pos_y = GRID_Y_MID;
 double	p_car_pos_x = -200.0;
 int		p_car_powerup = 0;
-int		p_car_pos_x_values[3] = { GRID_X_LEFT, GRID_X_MID, GRID_X_RIGHT };
+int		p_car_pos_x_values[3] = {
+									GRID_X_LEFT,
+									GRID_X_MID,
+									GRID_X_RIGHT
+};
 int		p_car_moving_x = 0;
 int		p_car_moving_y = 0;
 // -- used for swift animation from one grid area to another
@@ -57,14 +64,18 @@ int		contor_x = 0;
 
 // -- c(omputer)_car status --
 double	c_car_pos_x = 800; //start position of car (inversely proportional to time_pos*c_car_speed --^)
-int		c_car_pos_y_values[3] = { GRID_Y_LOWER, GRID_Y_MID, GRID_Y_UPPER };
+int		c_car_pos_y_values[3] = {
+									GRID_Y_LOWER,
+									GRID_Y_MID,
+									GRID_Y_UPPER
+};
 double	c_car_pos_y = c_car_pos_y_values[rand() % 3];
 double	c_car_speed = 1;
 
 double	x_car_pos_x = -350;
 
 // -- general game status --
-#define WIN_SCORE			20000
+#define WIN_SCORE		20000
 int		p_score = 0;
 int		pts_to_speed_incr = 100;	// speed increase rate
 double	action_speed = 0;	// when accel/brake speedup/slowdown everythng a bit to seem more realistic
@@ -100,7 +111,7 @@ void startgame(void) {
 
 	//  std::numeric_limits<double>::epsilon() eroarea la trunchiere numar virgula mobila 1.0000..001123
 	if (abs(c_car_pos_y - p_car_pos_y) > std::numeric_limits<double>::epsilon() + c_car_speed
-		|| abs(c_car_pos_x - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
+		|| abs(c_car_pos_x - 100 - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
 
 		c_car_pos_x -= c_car_speed + action_speed;
 
@@ -199,9 +210,8 @@ void draw_background() {
 
 void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) {
 
-	glTranslated(x_car_pos, y_car_pos, 0.0);
-
 	glPushMatrix();
+	glTranslated(x_car_pos, y_car_pos, 0.0);
 
 	//wheels
 		//fl
@@ -227,7 +237,6 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 	glTranslated(-30, -20, 0.0);
 	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)0);
 	glRecti(-10, -5, 10, 5);
-	glPopMatrix();
 	glPopMatrix();
 
 	//body
@@ -258,8 +267,74 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 	glPopMatrix();
 
 	glPopMatrix();
+	glPopMatrix();
+
+
 }
 
+
+
+
+// -- masina playerului --
+void draw_p_car() {
+
+	glPushMatrix();
+	// --- move car to logical grid positions while position != any grid position x or y
+	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
+		p_car_pos_y = p_car_pos_y + 1;
+		glRotated(2, 0, 0, 1);
+		p_car_moving_y = 1;
+	}
+	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
+		p_car_pos_y = p_car_pos_y - 1;
+		glRotated(-2, 0, 0, 1);
+		p_car_moving_y = 1;
+	}
+	else {
+		glRotated(0, 0, 0, 1);
+		contor_y = 0;
+		p_car_moving_y = 0;
+	}
+
+	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
+		p_car_pos_x = p_car_pos_x + 1;
+		action_speed = 0.5;
+		p_car_moving_x = 1;
+	}
+	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
+		p_car_pos_x = p_car_pos_x - 1;
+		action_speed = -0.5;
+		p_car_moving_x = 1;
+	}
+	else {
+		contor_x = 0;
+		action_speed = 0;
+		p_car_moving_x = 0;
+
+	}
+
+	glPushMatrix();
+	draw_car(p_car_pos_x, p_car_pos_y, 0.5, 0.2, 0.5);
+	glPushMatrix();
+
+
+	glPopMatrix();
+	glPopMatrix();
+	glPopMatrix();
+
+
+
+
+
+}
+// -- masinia din contrasens --
+void draw_c_car() {
+
+	glPushMatrix();
+	draw_car(c_car_pos_x, c_car_pos_y, 0.7, 0.2, 0.2);
+	glPopMatrix();
+
+}
 
 // - masina politite inceput --
 void draw_x_car(int index) {
@@ -289,59 +364,6 @@ void draw_x_car(int index) {
 
 	glPopMatrix();
 }
-
-// -- masina playerului --
-void draw_p_car() {
-
-	glPushMatrix();
-	glPushMatrix();
-	draw_car(p_car_pos_x, p_car_pos_y, 0.996, 0.365, 0.149);
-
-	// --- move car to logical grid positions while position != any grid position x or y
-	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
-		p_car_pos_y = p_car_pos_y + 1;
-		glRotated(3, 0, 0, 1);
-		p_car_moving_y = 1;
-	}
-	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
-		p_car_pos_y = p_car_pos_y - 1;
-		glRotated(-3, 0, 0, 1);
-		p_car_moving_y = 1;
-	}
-	else {
-		glRotated(0, 0, 0, 1);
-		contor_y = 0;
-		p_car_moving_y = 0;
-	}
-
-	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
-		p_car_pos_x = p_car_pos_x + 1;
-		action_speed = 0.5;
-		p_car_moving_x = 1;
-	}
-	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
-		p_car_pos_x = p_car_pos_x - 1;
-		action_speed = -0.5;
-		p_car_moving_x = 1;
-	}
-	else {
-		contor_x = 0;
-		action_speed = 0;
-		p_car_moving_x = 0;
-	}
-	glPopMatrix();
-	glPopMatrix();
-
-
-}
-// -- masinia din contrasens --
-void draw_c_car() {
-	glPushMatrix();
-	glPushMatrix();
-	draw_car(c_car_pos_x, c_car_pos_y, 0.7, 0.2, 0.2);
-	glPopMatrix();
-	glPopMatrix();
-}
 void draw_powerup() {
 	if (powerup_gen) {
 		glPushMatrix();
@@ -361,13 +383,13 @@ void draw_powerup() {
 
 void draw_scene(void)
 {
-	screen = INGAME;
+	screen = IN_GAME;
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// -- static objects --
 	draw_background();
-	draw_powerup();
+	//draw_powerup();
 
 	// -- dynamic objects --
 	draw_p_car();
@@ -407,7 +429,7 @@ void pre_start(void) {
 	Sleep(1);
 	if (first_anim == 1) {
 
-		glPopMatrix();
+		glPushMatrix();
 		draw_p_car();
 		glPushMatrix();
 
@@ -633,7 +655,7 @@ void leftclick(int x, int y) {
 			break;
 		}
 		break;
-	case INGAME:
+	case IN_GAME:
 		std::cout << "inside game left click";
 		break;
 	case SPLASH_SCREEN:
@@ -652,7 +674,7 @@ void rightclick(int x, int y) {
 	case OPTIONS:
 		std::cout << "inside options right click";
 		break;
-	case INGAME:
+	case IN_GAME:
 		std::cout << "inside game right click";
 		break;
 	case SPLASH_SCREEN:
