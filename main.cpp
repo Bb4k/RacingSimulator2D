@@ -47,16 +47,17 @@ int mouse_x = 0;
 int mouse_y = 0;
 
 // -- p(layer)_car status --
-double	p_car_pos_y = GRID_Y_MID;
-double	p_car_pos_x = -200.0;
-int		p_car_powerup = 0;
+double	p_car_pos_y		= GRID_Y_MID;
+double	p_car_pos_x		= -200.0;
+int		p_car_powerup	= 0;
 int		p_car_pos_x_values[3] = {
 									GRID_X_LEFT,
 									GRID_X_MID,
 									GRID_X_RIGHT
 };
-int		p_car_moving_x = 0;
-int		p_car_moving_y = 0;
+double p_car_angle		= 0.0;
+int		p_car_moving_x	= 0;
+int		p_car_moving_y	= 0;
 // -- used for swift animation from one grid area to another
 int		contor_y = 0; // increase/decrease contor relative to start position 
 int		contor_x = 0;
@@ -277,21 +278,44 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 
 // -- masina playerului --
 void draw_p_car() {
-
+	//Sleep(25);
 	glPushMatrix();
 	// --- move car to logical grid positions while position != any grid position x or y
+
 	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
 		p_car_pos_y = p_car_pos_y + 1;
-		glRotated(2, 0, 0, 1);
+		if (p_car_pos_y > GRID_Y_MID && p_car_pos_y < (GRID_Y_MID + (GRID_Y_UPPER - GRID_Y_MID) / 2)) {
+			glRotatef(p_car_angle + 0.04, 0, 0, 1);
+			p_car_angle += 0.04;
+		}		
+		else if (p_car_pos_y > GRID_Y_LOWER && p_car_pos_y < GRID_Y_LOWER + (GRID_Y_UPPER - GRID_Y_MID) / 2) {
+			glRotatef(p_car_angle + 0.04, 0, 0, 1);
+			p_car_angle += 0.04;
+		}
+		else {
+			glRotatef(p_car_angle - 0.04, 0, 0, 1);
+			p_car_angle -= 0.04;
+		}
 		p_car_moving_y = 1;
 	}
 	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
 		p_car_pos_y = p_car_pos_y - 1;
-		glRotated(-2, 0, 0, 1);
-		p_car_moving_y = 1;
+		if (p_car_pos_y < GRID_Y_MID && p_car_pos_y > (GRID_Y_LOWER + (GRID_Y_UPPER - GRID_Y_MID) / 2)) {
+			glRotatef(p_car_angle - 0.04, 0, 0, 1);
+			p_car_angle -= 0.04;
+		}
+		else if (p_car_pos_y < GRID_Y_UPPER && p_car_pos_y > GRID_Y_MID + (GRID_Y_UPPER - GRID_Y_MID) / 2) {
+			glRotatef(p_car_angle - 0.04, 0, 0, 1);
+			p_car_angle -= 0.04;
+		}
+		else {
+			glRotatef(p_car_angle + 0.04, 0, 0, 1);
+			p_car_angle += 0.04;
+		}
 	}
 	else {
-		glRotated(0, 0, 0, 1);
+		p_car_angle = 0;
+		glRotated(p_car_angle, 0, 0, 1);
 		contor_y = 0;
 		p_car_moving_y = 0;
 	}
