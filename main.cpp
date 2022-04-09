@@ -153,7 +153,7 @@ void draw_background() {
 	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
 	street_line -= (int)(2 * c_car_speed) + 0.1;
 
-	if (street_line < -1000)
+	if (street_line < -1500)
 		street_line = 1000;
 	// Iarba de jos
 	glBegin(GL_POLYGON);
@@ -204,8 +204,24 @@ void draw_background() {
 	glBegin(GL_LINES);
 	glVertex2i(0, 240);
 	glVertex2i(400, 240);
+	glEnd(); 
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslated(street_line + 1000, 0.0, 0.0);
+	glLineWidth(15);
+
+	glBegin(GL_LINES);
+	glVertex2i(0, 80);
+	glVertex2i(400, 80);
+	glEnd();
+
+	glBegin(GL_LINES);
+	glVertex2i(0, 240);
+	glVertex2i(400, 240);
 	glEnd();
 	glPopMatrix();
+
 }
 
 
@@ -312,6 +328,7 @@ void draw_p_car() {
 			glRotatef(p_car_angle + 0.04, 0, 0, 1);
 			p_car_angle += 0.04;
 		}
+		p_car_moving_y = 1;
 	}
 	else {
 		p_car_angle = 0;
@@ -322,12 +339,12 @@ void draw_p_car() {
 
 	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
 		p_car_pos_x = p_car_pos_x + 1;
-		action_speed = 0.5;
+		action_speed = 0.2;
 		p_car_moving_x = 1;
 	}
 	else if (contor_x == -1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x != GRID_X_LEFT)) {
 		p_car_pos_x = p_car_pos_x - 1;
-		action_speed = -0.5;
+		action_speed = -0.2;
 		p_car_moving_x = 1;
 	}
 	else {
@@ -353,9 +370,11 @@ void draw_p_car() {
 }
 // -- masinia din contrasens --
 void draw_c_car() {
-
 	glPushMatrix();
-	draw_car(c_car_pos_x, c_car_pos_y, 0.7, 0.2, 0.2);
+	glRotated(180, 0, 0, 0);
+	glPushMatrix();
+	draw_car(-c_car_pos_x, -c_car_pos_y, 0.7, 0.2, 0.2);
+	glPopMatrix();
 	glPopMatrix();
 
 }
@@ -406,7 +425,7 @@ void draw_powerup() {
 }
 
 void draw_scene(void)
-{
+{	
 	screen = IN_GAME;
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -447,6 +466,8 @@ char aux[] = "";
 
 void pre_start(void) {
 
+	screen = IN_GAME;
+
 	if (first_anim || sec_anim)
 		glClear(GL_COLOR_BUFFER_BIT);
 	draw_background();
@@ -475,21 +496,23 @@ void pre_start(void) {
 
 	if (dialogue == 1) {
 		draw_background();
+		draw_x_car(index);
+		Sleep(15); //slow-mo
 		if (next_chr <= strlen(text)) {
-			if (index % 10 == 0) {
-				strncpy(aux, text, next_chr);
-				RenderString(300, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)aux);
-				Sleep(100);
-				++next_chr;
-			}
-			++index;
+	
+			strncpy(aux, text, next_chr);
+			RenderString(300, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)aux);
+			Sleep(100);
+			++next_chr;
 		}
+		
 		else {
 			Sleep(1000);
 			dialogue = 0;
 			first_anim = 0;
 			sec_anim = 1;
 		}
+		++index;
 	}
 	++index;
 	if (sec_anim == 1) {
