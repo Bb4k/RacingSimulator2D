@@ -55,7 +55,7 @@ int		p_car_pos_x_values[3] = {
 									GRID_X_MID,
 									GRID_X_RIGHT
 };
-double p_car_angle		= 0.0;
+double	p_car_angle		= 0.0;
 int		p_car_moving_x	= 0;
 int		p_car_moving_y	= 0;
 // -- used for swift animation from one grid area to another
@@ -71,7 +71,8 @@ int		c_car_pos_y_values[3] = {
 									GRID_Y_UPPER
 };
 double	c_car_pos_y = c_car_pos_y_values[rand() % 3];
-double	c_car_speed = 1;
+double	c_car_speed		= 1;
+double	c_car_max_speed = 3;
 
 double	x_car_pos_x = -350;
 
@@ -114,6 +115,8 @@ void startgame(void) {
 	if (abs(c_car_pos_y - p_car_pos_y) > std::numeric_limits<double>::epsilon() + c_car_speed
 		|| abs(c_car_pos_x - 100 - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
 
+
+		
 		c_car_pos_x -= c_car_speed + action_speed;
 
 
@@ -126,7 +129,7 @@ void startgame(void) {
 
 		if (p_score >= pts_to_speed_incr && pts_to_speed_incr <= WIN_SCORE) {
 			c_car_speed += 0.1;
-			pts_to_speed_incr = p_score + 200;
+			pts_to_speed_incr += 200;
 		}
 
 		if (p_score % 1000 == 0 && !powerup_gen && p_score > 0) {
@@ -143,18 +146,29 @@ void startgame(void) {
 		glutPostRedisplay();
 	}
 	else {
-		//std::cout << "should exit";
-		_run = 0;
-		_win = 0;
+		if (c_car_speed / 2 >= c_car_max_speed / 4) {
+			std::cout << c_car_speed/2 << " " << c_car_max_speed/4;
+			c_car_speed = 1.4;
+			p_car_pos_x += 3.0;
+		}
+		else {
+			_run = 0;
+			_win = 0;
+		}
 	}
+	//else {
+	//	//std::cout << "should exit";
+	//	_run = 0;
+	//	_win = 0;
+	//}
 }
 
 void draw_background() {
 	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
-	street_line -= (int)(2 * c_car_speed) + 0.1;
+	street_line -= (int)(c_car_speed) - 0.1;
 
-	if (street_line < -1500)
-		street_line = 1000;
+	if (street_line < -1200)
+		street_line = 700;
 	// Iarba de jos
 	glBegin(GL_POLYGON);
 	glVertex2i(-100, -140);// Stanga jos
@@ -190,36 +204,24 @@ void draw_background() {
 	glVertex2i(1500, 400);
 	glEnd();
 
+	glPushMatrix();
 	// Liniile intrerupte
+	for (int line = 0; line < 2; ++line) {
+		glPushMatrix();
+		glTranslated(street_line+line*800, 0.0, 0.0);
+		glLineWidth(15);
 
-	glPushMatrix();
-	glTranslated(street_line, 0.0, 0.0);
-	glLineWidth(15);
+		glBegin(GL_LINES);
+		glVertex2i(0, 80);
+		glVertex2i(300, 80);
+		glEnd();
 
-	glBegin(GL_LINES);
-	glVertex2i(0, 80);
-	glVertex2i(400, 80);
-	glEnd();
-
-	glBegin(GL_LINES);
-	glVertex2i(0, 240);
-	glVertex2i(400, 240);
-	glEnd(); 
-	glPopMatrix();
-
-	glPushMatrix();
-	glTranslated(street_line + 1000, 0.0, 0.0);
-	glLineWidth(15);
-
-	glBegin(GL_LINES);
-	glVertex2i(0, 80);
-	glVertex2i(400, 80);
-	glEnd();
-
-	glBegin(GL_LINES);
-	glVertex2i(0, 240);
-	glVertex2i(400, 240);
-	glEnd();
+		glBegin(GL_LINES);
+		glVertex2i(0, 240);
+		glVertex2i(300, 240);
+		glEnd();
+		glPopMatrix();
+	}
 	glPopMatrix();
 
 }
@@ -288,8 +290,6 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 
 
 }
-
-
 
 
 // -- masina playerului --
@@ -362,10 +362,6 @@ void draw_p_car() {
 	glPopMatrix();
 	glPopMatrix();
 	glPopMatrix();
-
-
-
-
 
 }
 // -- masinia din contrasens --
