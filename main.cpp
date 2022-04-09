@@ -3,6 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS_GLOBALS 1
 
 #include <iostream>
+#include <fstream>
 #include <windows.h>
 #include <cstdlib>
 #ifdef _WIN32
@@ -16,6 +17,7 @@
 #include <tuple>
 #include <sstream>
 #include <vector>
+#include <algorithm> 
 
 // --site-packages--
 #include <GL/freeglut.h>
@@ -50,6 +52,7 @@ GLdouble top_m = 460.0;
 #define CAMPAIGN		21
 
 int _prev_scr = -1;
+
 int _run = 1;
 int _win = 0;
 int _ee = 0;
@@ -123,6 +126,16 @@ int		powerup_time_on = 5; //seconds
 
 
 double street_line = 1000;
+
+// -- scores --
+struct Score
+{
+	std::string name;
+	int score;
+};
+std::vector<Score> scores;
+std::ifstream file_scores_r;
+std::ofstream file_scores_w;
 
 
 
@@ -1132,8 +1145,44 @@ void reshape(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
+
+void load_scores() {
+	Score player;
+	file_scores_r.open("scores.txt");
+	while (file_scores_r.is_open() && !file_scores_r.eof())
+	{
+		file_scores_r >> player.name >> player.score;
+		std::cout << player.name << player.score;
+		scores.push_back(player);
+	}
+	//file_scores_r.close();
+}
+
+bool compare_scores(Score score1, Score score2) {
+	return score1.score > score2.score;
+}
+
+void top_scores_screen() {
+	screen = LEAD_B;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+	RenderString(200.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TOP 5 PLAYERS");
+	float dim = 200.0f;
+	std::sort(scores.begin(), scores.end(), compare_scores);
+	for (auto player : scores) {
+		std::string line = player.name + " . . . . . . . . . . . . " + std::to_string(player.score);
+		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
+		dim -= 50.0f;
+
+	}
+
+	glutSwapBuffers();
+	glFlush();
+}
+
 int main(int argc, char** argv)
 {
+	load_scores();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(800, 600);
@@ -1144,7 +1193,7 @@ int main(int argc, char** argv)
 	glutKeyboardFunc(keyboard_input);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(splash_screen);
+	glutDisplayFunc(top_scores_screen);
 	glutReshapeFunc(reshape);
 
 
