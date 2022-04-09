@@ -18,3 +18,6 @@
 - [ ] documentatia: continut, claritatea descrierii proiectului si a solutiilor propuse, evidentierea unor aspecte punctuale din lista de mai sus (primitive, transformari, compunerea transformarilor), argumentarea originalitatii, redactarea textului;
 - [ ] prezentarea proiectului la laborator.
 
+## Workflow (screens)
+
+![SCREENS WORKFLOW](https://user-images.githubusercontent.com/30263894/162589090-fd02868e-5f7a-40d0-a9e5-c08de79e682f.png)
