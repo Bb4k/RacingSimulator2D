@@ -9,7 +9,7 @@
 #include <chrono>
 #include <string.h>
 #include <string>
-
+#include <tuple>
 
 // --site-packages--
 #include <GL/freeglut.h>
@@ -37,20 +37,25 @@ GLdouble top_m = 460.0;
 #define LEAD_B			13
 #define PRE_GAME		14
 #define SPLASH_SCREEN	-1
-int _prev_scr = -1;
-int _run = 1;
-int _win = 0;
-int _ee = 0;
 
-int screen = 0; // different screen values to determine what window is open
-int hover = 0;
-int mouse_x = 0;
-int mouse_y = 0;
+#define ENDLESS			20
+#define CAMPAIGN		21
+
+int _prev_scr			= -1;
+int _run				= 1;
+int _win				= 0;
+int _ee					= 0;
+int game_mode			= 20;
+
+int screen				= 0; // different screen values to determine what window is open
+int hover				= 0;
+int mouse_x				= 0;
+int mouse_y				= 0;
 
 // -- p(layer)_car status --
 double	p_car_pos_y		= GRID_Y_MID;
 double	p_car_pos_x		= -200.0;
-int		p_car_powerup	= 0;
+
 int		p_car_pos_x_values[3] = {
 									GRID_X_LEFT,
 									GRID_X_MID,
@@ -63,6 +68,23 @@ int		p_car_moving_y	= 0;
 int		contor_y = 0; // increase/decrease contor relative to start position 
 int		contor_x = 0;
 
+double	p_car_color_r	= 0.5;
+double	p_car_color_g	= 0.8;
+double	p_car_color_b	= 0.2;
+
+//										 -r- -g- -b-
+double	p_car_color_values[][3] = { 
+										{0.5,0.8,0.2}, //green ciucas (default)
+										{0.9,0.1,0.1}, //red ca focu
+										{0.7,0.7,0.1}, //yellow de invidie 
+										{0.1,0.1,0.9}, //blue de voronet
+										{1.0,0.1,0.7}, //ciclam
+
+									};
+int		p_car_selected_color = 0;
+
+int		p_car_powerup	= 0;
+
 
 // -- c(omputer)_car status --
 double	c_car_pos_x = 800; //start position of car (inversely proportional to time_pos*c_car_speed --^)
@@ -70,27 +92,28 @@ int		c_car_pos_y_values[3] = {
 									GRID_Y_LOWER,
 									GRID_Y_MID,
 									GRID_Y_UPPER
-};
-double	c_car_pos_y = c_car_pos_y_values[rand() % 3];
+								};
+
+double	c_car_pos_y		= c_car_pos_y_values[rand() % 3];
 double	c_car_speed		= 1;
 double	c_car_max_speed = 3;
 
-double	x_car_pos_x = -350;
+double	x_car_pos_x		= -350;
 
 // -- general game status --
 #define WIN_SCORE		20000
-int		p_score = 0;
+int		p_score			= 0;
 int		pts_to_speed_incr = 100;	// speed increase rate
-double	action_speed = 0;	// when accel/brake speedup/slowdown everythng a bit to seem more realistic
+double	action_speed	= 0;	// when accel/brake speedup/slowdown everythng a bit to seem more realistic
 	// -- powerups --
-int		powerup_gen = 0;
-int		powerup_pos_x = 0;
-int		powerup_pos_y = 0;
-int		powerup_size = 20;
+int		powerup_gen		= 0;
+int		powerup_pos_x	= 0;
+int		powerup_pos_y	= 0;
+int		powerup_size	= 20;
 int		powerup_time_on = 5; //seconds
 
 
-double street_line = 1000;
+double street_line		= 1000;
 
 void init(void) {
 	glClearColor((GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.0);
@@ -128,7 +151,7 @@ void startgame(void) {
 			c_car_pos_x = 800;
 		}
 
-		if (p_score >= pts_to_speed_incr && pts_to_speed_incr <= WIN_SCORE) {
+		if (p_score >= pts_to_speed_incr) {
 			c_car_speed += 0.1;
 			pts_to_speed_incr += 200;
 		}
@@ -139,7 +162,7 @@ void startgame(void) {
 			powerup_pos_y = rand() % 335;
 		}
 
-		if (p_score >= WIN_SCORE) {
+		if (p_score >= WIN_SCORE && game_mode == CAMPAIGN) {
 			_run = 0;
 			_win = 1;
 		}
@@ -186,8 +209,12 @@ void draw_background() {
 	glVertex2i(-100, 460);// Stanga sus
 	glEnd();
 
-	RenderString(200.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Depaseste masinile! Scor:");
-	RenderString(455.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
+	if (screen == IN_GAME) {
+		RenderString(200.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Depaseste masinile! Scor:");
+		RenderString(455.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
+	} else 
+		if (screen == PRE_GAME)
+			RenderString(200.0f, 425.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Alege masina si modul de joc");
 
 	// Delimitare sosea
 	glLineWidth(3);
@@ -409,7 +436,7 @@ void draw_p_car() {
 		glPopMatrix();
 	}
 	else 
-		draw_car(p_car_pos_x, p_car_pos_y, 0.5, 0.2, 0.5);
+		draw_car(p_car_pos_x, p_car_pos_y, p_car_color_r, p_car_color_g, p_car_color_b);
 
 
 
@@ -593,7 +620,7 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 	glPushMatrix();
 	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
 
-	if (mouse_x > btn_pos_x && mouse_x < btn_pos_x + 2.0 * btn_w &&
+	if (mouse_x > btn_pos_x + btn_w/4 && mouse_x < btn_pos_x + 2.0 * btn_w + btn_w/4 &&
 		mouse_y > top_m - btn_pos_y - btn_h && mouse_y < top_m - btn_pos_y + btn_h) {
 		glColor3f((GLdouble)0, (GLdouble)0.5, (GLdouble)0);
 		glRecti(-btn_w - 5, -btn_h - 5, btn_w - 5, btn_h - 5);
@@ -670,7 +697,58 @@ void splash_screen() {
 
 void pre_game() {
 
+	screen = PRE_GAME;
+	glClear(GL_COLOR_BUFFER_BIT);
+	//glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+	c_car_speed = 2;
+	draw_background();
+	draw_car(150, 160,	p_car_color_values[p_car_selected_color][0], //r
+						p_car_color_values[p_car_selected_color][1], //g
+						p_car_color_values[p_car_selected_color][2]);//b
 
+
+	//  ----------------------------------- game mode --------------------------------------------
+	// campaign (default)
+	draw_button((GLdouble)300, (GLdouble)320, 20, 75, "NEXT");
+
+	// endless 
+	draw_button((GLdouble)0, (GLdouble)320, 20, 75, "PREV");
+
+	if (game_mode == ENDLESS)
+		RenderString(100.0f, 320.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"ENDLESS");
+	else if (game_mode == CAMPAIGN)
+		RenderString(85.0f, 320.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"CAMPAIGN");
+	// -------------------------------------------------------------------------------------------
+
+	//  ----------------------------------- actions --------------------------------------------
+	// back to menu
+	draw_button((GLdouble)500, (GLdouble)240, 20, 75, "START");
+	// start
+	draw_button((GLdouble)500, (GLdouble)80, 20, 75, "MENU");
+
+	// left arrow car select 
+	draw_button((GLdouble)0, (GLdouble)160, 20, 75, "PREV");
+
+	// right arrow car select
+	draw_button((GLdouble)300, (GLdouble)160, 20, 75, "NEXT");
+
+	// left arrow color select
+	draw_button((GLdouble)0, (GLdouble)0, 20, 75, "PREV");
+
+	// right arrow color select 
+	draw_button((GLdouble)300, (GLdouble)0, 20, 75, "NEXT");
+
+	// car color preview square
+	glColor3f((GLfloat)p_car_color_r, (GLfloat)p_car_color_g, (GLfloat)p_car_color_b);
+	glRecti(125, -25, 175, 25);
+	// -------------------------------------------------------------------------------------------
+
+
+	glutPostRedisplay();
+	glutSwapBuffers();
+	glFlush();
+	Sleep(5);
+	//glutDisplayFunc(main_menu);
 
 }
 
@@ -734,7 +812,7 @@ void leftclick(int x, int y) {
 	case MAIN_MENU:
 		std::cout << "inside main menu left click";
 		if (x > 300 && x < 500 && y > 140 && y < 180) {
-			glutDisplayFunc(pre_start);
+			glutDisplayFunc(pre_game);
 			break;
 		}
 		if (x > 300 && x < 500 && y > 240 && y < 280) {
@@ -754,6 +832,63 @@ void leftclick(int x, int y) {
 		break;
 	case SPLASH_SCREEN:
 		glutDisplayFunc(main_menu);
+		break;
+	case PRE_GAME:
+
+		// start
+		if (x > 525 && x < 675 && y > 200 && y < 240) {
+			glutDisplayFunc(pre_start);
+			break;
+		}
+		// back 
+		if (x > 525 && x < 675 && y > 360 && y < 400) {
+			glutDisplayFunc(main_menu);
+			break;
+		}
+		// -- left arrow change game mode --
+		if (x > 20 && x < 175 && y > 120 && y < 160) {
+			game_mode = ENDLESS;
+			break;
+		}
+		// -- right arrow change game mode --
+		if (x > 325 && x < 475 && y > 120 && y < 160) {
+			game_mode = CAMPAIGN;
+			break;
+		}
+
+		// -- left arrow change car --
+		if (x > 20 && x < 175 && y > 280 && y < 320) {
+			//glutDisplayFunc(options_screen);
+			break;
+		}
+		// -- right arrow change car --
+		if (x > 325 && x < 475 && y > 280 && y < 320) {
+			//glutDisplayFunc(options_screen);
+			break;
+		}
+		// -- left arrow change color --
+		if (x > 20 && x < 175 && y > 445 && y < 480) {
+			//prev color
+			if (p_car_selected_color >= 1) {
+				p_car_color_r = p_car_color_values[p_car_selected_color - 1][0];
+				p_car_color_g = p_car_color_values[p_car_selected_color - 1][1];
+				p_car_color_b = p_car_color_values[p_car_selected_color - 1][2];
+				p_car_selected_color -= 1;
+			}
+			break;
+		}
+		// -- right arrow change color --
+		if (x > 325 && x < 475 && y > 445 && y < 480) {
+			//next color
+			std::cout << sizeof(p_car_color_values) / sizeof(p_car_color_values[0]);
+			if (p_car_selected_color < sizeof(p_car_color_values) / sizeof(p_car_color_values[0]) - 1) {
+				p_car_color_r = p_car_color_values[p_car_selected_color + 1][0];
+				p_car_color_g = p_car_color_values[p_car_selected_color + 1][1];
+				p_car_color_b = p_car_color_values[p_car_selected_color + 1][2];
+				p_car_selected_color += 1;
+			}
+			break;
+		}
 		break;
 	default:
 		break;
@@ -813,7 +948,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(keyboard);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(splash_screen);
+	glutDisplayFunc(pre_game);
 	glutReshapeFunc(reshape);
 
 
