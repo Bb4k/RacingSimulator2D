@@ -609,7 +609,8 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 void main_menu() {
 	screen = MAIN_MENU;
 
-	int i = 0;
+	c_car_speed = 1; // ravert from splash sreen anim;
+
 
 	// -- main menu text 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -650,13 +651,27 @@ void splash_screen() {
 
 	screen = SPLASH_SCREEN;
 	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+	//glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+	c_car_speed = 2;
+	draw_background();
+	p_car_pos_y = 160;
+	p_car_pos_x +=1;
+	if (p_car_pos_x > 850)
+		p_car_pos_x = -200;
+	draw_p_car();
 	RenderString(280.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Bb4k");
-	RenderString(200.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Click anywhere to enter game...");
+	RenderString(150.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Click anywhere to enter game...");
+	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
 	Sleep(5);
 	//glutDisplayFunc(main_menu);
+}
+
+void pre_game() {
+
+
+
 }
 
 void misca_sus(void) {
