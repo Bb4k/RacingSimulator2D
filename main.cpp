@@ -1,3 +1,7 @@
+// sys
+#define _CRT_SECURE_NO_WARNINGS 1
+#define _CRT_SECURE_NO_WARNINGS_GLOBALS 1
+
 #include <iostream>
 #include <windows.h>
 #include <cstdlib>
@@ -18,10 +22,10 @@
 
 
 // -- defines work area --
-GLdouble left_m = -100.0;
-GLdouble right_m = 700.0;
-GLdouble bottom_m = -140.0;
-GLdouble top_m = 460.0;
+GLdouble left_m			= -100.0;
+GLdouble right_m		= 700.0;
+GLdouble bottom_m		= -140.0;
+GLdouble top_m			= 460.0;
 
 // -- logic game grid --
 #define GRID_Y_LOWER	0
@@ -39,6 +43,7 @@ GLdouble top_m = 460.0;
 #define LEAD_B			13
 #define PRE_GAME		14
 #define END_GAME		15
+#define ANIM			16
 #define SPLASH_SCREEN	-1
 
 #define ENDLESS			20
@@ -67,6 +72,7 @@ int		p_car_pos_x_values[3] = {
 double	p_car_angle		= 0.0;
 int		p_car_moving_x	= 0;
 int		p_car_moving_y	= 0;
+int		p_car_crashed	= 0;
 // -- used for swift animation from one grid area to another
 int		contor_y = 0; // increase/decrease contor relative to start position 
 int		contor_x = 0;
@@ -93,11 +99,11 @@ int		p_car_powerup	= 0;
 double	c_car_pos_x = 800; //start position of car (inversely proportional to time_pos*c_car_speed --^)
 int		c_car_pos_y_values[3] = {
 									GRID_Y_LOWER,
-									GRID_Y_MID,
-									GRID_Y_UPPER
+									GRID_Y_UPPER,
+									GRID_Y_MID
 								};
 
-double	c_car_pos_y		= c_car_pos_y_values[rand() % 3];
+double	c_car_pos_y		= c_car_pos_y_values[rand() % 2];
 double	c_car_speed		= 1;
 double	c_car_max_speed = 3;
 
@@ -118,6 +124,8 @@ int		powerup_time_on = 5; //seconds
 
 double street_line		= 1000;
 
+
+
 // -- kb input --
 std::vector <std::string> names(1);
 
@@ -126,6 +134,7 @@ void init(void) {
 	glMatrixMode(GL_PROJECTION);
 	glShadeModel(GL_SMOOTH);
 	glOrtho(left_m, right_m, bottom_m, top_m, -1.0, 1.0);
+	srand(time(NULL));
 }
 
 void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* string) {
@@ -186,11 +195,6 @@ void startgame(void) {
 			_win = 0;
 		}
 	}
-	//else {
-	//	//std::cout << "should exit";
-	//	_run = 0;
-	//	_win = 0;
-	//}
 }
 
 void draw_background() {
@@ -358,8 +362,15 @@ void draw_x_car(int index) {
 // -- masina playerului --
 void draw_p_car() {
 	//Sleep(25);
+	
 	glPushMatrix();
 	// --- move car to logical grid positions while position != any grid position x or y
+
+	
+	if (p_car_crashed) {
+		glRotatef(p_car_angle + 0.05, 0, 0, 1);
+		p_car_angle += 0.05;
+	}
 
 	if (contor_y == 1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_UPPER)) {
 		p_car_pos_y = p_car_pos_y + 1;
@@ -394,10 +405,12 @@ void draw_p_car() {
 		p_car_moving_y = 1;
 	}
 	else {
-		p_car_angle = 0;
-		glRotated(p_car_angle, 0, 0, 1);
-		contor_y = 0;
-		p_car_moving_y = 0;
+		if (!p_car_crashed) {
+			p_car_angle = 0;
+			glRotated(p_car_angle, 0, 0, 1);
+			contor_y = 0;
+			p_car_moving_y = 0;
+		}
 	}
 
 	if (contor_x == 1 && (p_car_pos_x != GRID_X_MID && p_car_pos_x <= GRID_X_RIGHT)) {
@@ -499,9 +512,12 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 	glPopMatrix();
 }
 void end_game() {
+
 	screen = END_GAME;
 	glClear(GL_COLOR_BUFFER_BIT);
+	c_car_speed = 1;
 	draw_background();
+
 	if (c_car_pos_x < -150) {
 		c_car_pos_x = 900;
 		c_car_pos_y = c_car_pos_y_values[rand() % 3];
@@ -511,15 +527,12 @@ void end_game() {
 	draw_c_car();
 	glPopMatrix();
 
-	if (_win) {
+	if (_win)
 		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"YOU WIN! Score:");
-
-	}
-	else {
+	else 
 		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
-
-	}
-	RenderString(270.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)p_score);
+	
+	RenderString(500.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
 
 	for (size_t i = 0; i < names.size(); ++i)
 	{
@@ -535,7 +548,7 @@ void end_game() {
 
 	// read from file insert str
 	for (int lb_score = 0; lb_score < 5; ++lb_score) {
-		RenderString(100.0f, 250.0f - lb_score * 50, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"MILSUGI                      3500 points");
+		RenderString(100.0f, 250.0f - lb_score * 50, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TEST                      3500 points");
 	}
 	// -------------------- actions ------------------
 	// main menu
@@ -550,6 +563,57 @@ void end_game() {
 	glFlush();
 	Sleep(5);
 }
+
+int go_anim = 1;
+
+void game_over_anim() {
+
+	if (!go_anim)
+		glutDisplayFunc(end_game);
+
+	p_car_crashed = 1;
+	screen = ANIM;
+	Sleep(5);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	//glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+
+	draw_background();
+
+	if (p_car_pos_x != GRID_X_MID && p_car_pos_y != GRID_Y_MID) {
+		p_car_pos_x -= 1 * ((p_car_pos_x - GRID_X_MID) / abs(p_car_pos_x - GRID_X_MID));
+		p_car_pos_y -= 1 * ((p_car_pos_y - GRID_Y_MID) / abs(p_car_pos_y - GRID_Y_MID));
+	}
+	
+
+	
+	if (x_car_pos_x != GRID_X_LEFT + 200)
+		x_car_pos_x = x_car_pos_x + 0.5;
+	else {
+		x_car_pos_x = GRID_X_LEFT + 200;
+		go_anim = 0;
+	}
+
+	draw_p_car();
+
+	draw_x_car(index);
+	++index;
+
+	draw_c_car();
+
+
+	
+	glutPostRedisplay();
+	glutSwapBuffers();
+	glFlush();
+	
+}
+
+void win_anim() {
+	// TODO implement win animations
+	glutDisplayFunc(end_game);
+}
+
 void draw_scene(void)
 {
 	screen = IN_GAME;
@@ -567,8 +631,15 @@ void draw_scene(void)
 
 	// -- end game --
 	if (_run == 0) {
+		std::cout << "run = 0";
 		//TODO call end_screen 
-		glutDisplayFunc(end_game);
+		if (_win)
+			glutDisplayFunc(win_anim);
+		else {
+			x_car_pos_x = -150;
+			glutDisplayFunc(game_over_anim);
+		}
+			
 
 	}
 
@@ -605,16 +676,19 @@ void pre_start(void) {
 		draw_x_car(index);
 		glPopMatrix();
 
+		if (p_car_pos_x > 1000)
+			p_car_pos_x = -150;
 
 		if (p_car_pos_x != GRID_X_MID)
 			p_car_pos_x = p_car_pos_x + 0.5;
+		else if (x_car_pos_x != GRID_X_LEFT && p_car_pos_x > -100)
+			x_car_pos_x = x_car_pos_x + 0.5;
 		else {
 			dialogue = 1;
 			first_anim = 0;
 		}
 
-		if (x_car_pos_x != GRID_X_LEFT)
-			x_car_pos_x = x_car_pos_x + 0.5;
+		
 	}
 
 	if (dialogue == 1) {
@@ -677,14 +751,26 @@ void pre_start(void) {
 
 void main_menu() {
 	screen = MAIN_MENU;
-
-	c_car_speed = 1; // ravert from splash sreen anim;
-
-
+	
+	Sleep(5);
 	// -- main menu text 
 	glClear(GL_COLOR_BUFFER_BIT);
 	RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"MAIN MENU");
-
+	draw_background();
+	c_car_speed = 1;
+	p_car_pos_y = 160;
+	p_car_pos_x += 1;
+	if (p_car_pos_x > 850)
+		p_car_pos_x = -200;
+	draw_p_car();
+	if (c_car_pos_x < -150) {
+		c_car_pos_x = 900;
+		c_car_pos_y = c_car_pos_y_values[rand() % 2];
+	}
+	c_car_pos_x -= c_car_speed;
+	glPushMatrix();
+	draw_c_car();
+	glPopMatrix();
 	// -- start button --
 	draw_button((GLdouble)300, (GLdouble)300, 20, 100, "START");
 	//RenderString(260.0f, 290.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"START");
@@ -693,6 +779,7 @@ void main_menu() {
 	draw_button((GLdouble)300, (GLdouble)200, 20, 100, "OPTIONS");
 	//RenderString(250.0f, 190.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"OPTIONS");
 
+	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
 
@@ -721,15 +808,27 @@ void splash_screen() {
 	screen = SPLASH_SCREEN;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
-	c_car_speed = 2;
+	c_car_speed = 5;
 	draw_background();
 	p_car_pos_y = 160;
 	p_car_pos_x +=1;
 	if (p_car_pos_x > 850)
 		p_car_pos_x = -200;
 	draw_p_car();
+	
+	if (c_car_pos_x < -150) {
+		c_car_pos_x = 900;
+		c_car_pos_y = c_car_pos_y_values[rand() % 2];
+	}
+	c_car_pos_x -= c_car_speed;
+	glPushMatrix();
+	draw_c_car();
+	glPopMatrix();
+
+
 	RenderString(280.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Bb4k");
 	RenderString(150.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"Click anywhere to enter game...");
+
 	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
@@ -999,6 +1098,7 @@ void mouse_pos(int x, int y) {
 	mouse_x = x;
 	mouse_y = y;
 	glutPostRedisplay();
+	
 	//std::cout << "(" << x << ", " << y << ")\n";
 }
 
@@ -1023,7 +1123,7 @@ int main(int argc, char** argv)
 	glutKeyboardFunc(keyboard_input);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(end_game);
+	glutDisplayFunc(splash_screen);
 	glutReshapeFunc(reshape);
 
 
