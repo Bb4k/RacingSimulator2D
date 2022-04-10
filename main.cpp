@@ -155,7 +155,6 @@ void startgame(void) {
 		|| abs(c_car_pos_x - 100 - p_car_pos_x) > std::numeric_limits<double>::epsilon() + c_car_speed) { //double equal right way
 
 
-		
 		c_car_pos_x -= c_car_speed + action_speed;
 
 
@@ -164,12 +163,12 @@ void startgame(void) {
 			c_car_pos_y = c_car_pos_y_values[rand() % 3];
 			//std::cout << "Score:  " << score << endl;
 			c_car_pos_x = 800;
+			c_car_speed += 0.05;
 		}
 
-		if (p_score >= pts_to_speed_incr) {
-			c_car_speed += 0.1;
-			pts_to_speed_incr += 200;
-		}
+	/*	if (p_score >= pts_to_speed_incr) {
+			
+		}*/
 
 		if (p_score % 1000 == 0 && !powerup_gen && p_score > 0) {
 			powerup_gen = 1;
@@ -185,15 +184,17 @@ void startgame(void) {
 		glutPostRedisplay();
 	}
 	else {
-		if (c_car_speed / 2 >= c_car_max_speed / 4) {
-			std::cout << c_car_speed/2 << " " << c_car_max_speed/4;
-			c_car_speed = 1.4;
+		if (c_car_speed / 2 > c_car_max_speed / 4) {
+			//std::cout << c_car_speed/2 << " " << c_car_max_speed/4;
+			c_car_speed = 1;
 			p_car_pos_x += 3.0;
+			glutPostRedisplay();
 		}
 		else {
 			_run = 0;
 			_win = 0;
 		}
+
 	}
 }
 
@@ -757,9 +758,10 @@ void main_menu() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"MAIN MENU");
 	draw_background();
-	c_car_speed = 1;
+	
 	p_car_pos_y = 160;
-	p_car_pos_x += 1;
+	p_car_pos_x += c_car_speed/2;
+	c_car_speed = 1;
 	if (p_car_pos_x > 850)
 		p_car_pos_x = -200;
 	draw_p_car();
@@ -1053,6 +1055,22 @@ void leftclick(int x, int y) {
 			break;
 		}
 		break;
+	case END_GAME:
+		if (x > 20 && x < 175 && y > 445 && y < 480) {
+			//call func
+		}
+		if (x > 20 && x < 175 && y > 445 && y < 480) {
+			glutDisplayFunc(main_menu);
+			break;
+		}
+		if (x > 20 && x < 175 && y > 445 && y < 480) {
+			p_score = 0;
+			c_car_speed = 1;
+			glutDisplayFunc(draw_scene);
+			break;
+		}
+		
+		break;
 	default:
 		break;
 	}
@@ -1099,8 +1117,9 @@ void mouse_pos(int x, int y) {
 	mouse_x = x;
 	mouse_y = y;
 	glutPostRedisplay();
-	
-	//std::cout << "(" << x << ", " << y << ")\n";
+	if(screen == MAIN_MENU)
+		c_car_speed = 10;
+	std::cout << "(" << x << ", " << y << ")\n";
 }
 
 void reshape(int w, int h)
