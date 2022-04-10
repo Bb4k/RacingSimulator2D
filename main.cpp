@@ -656,7 +656,7 @@ int dialogue = 0;
 int sec_anim = 0;
 
 int next_chr = 0;
-char text[27] = "CATCH ME IF YOU CAN HAHAHA";
+char text[27] = "CATCH ME";
 char aux[] = "";
 
 void pre_start(void) {
