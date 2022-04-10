@@ -524,7 +524,7 @@ void end_game() {
 	}
 	c_car_pos_x -= c_car_speed;
 	glPushMatrix();
-	draw_c_car();
+		draw_c_car();
 	glPopMatrix();
 
 	if (_win)
@@ -655,7 +655,7 @@ int dialogue = 0;
 int sec_anim = 0;
 
 int next_chr = 0;
-char text[27] = "CATCH ME IF YOU CAN HAHAHA";
+char text[27] = "CATCH ME";
 char aux[] = "";
 
 void pre_start(void) {
@@ -1095,6 +1095,7 @@ void mouse(int button, int state, int x, int y) {
 }
 
 void mouse_pos(int x, int y) {
+
 	mouse_x = x;
 	mouse_y = y;
 	glutPostRedisplay();
