@@ -10,6 +10,8 @@
 #include <string.h>
 #include <string>
 #include <tuple>
+#include <sstream>
+#include <vector>
 
 // --site-packages--
 #include <GL/freeglut.h>
@@ -36,6 +38,7 @@ GLdouble top_m = 460.0;
 #define IN_GAME			12
 #define LEAD_B			13
 #define PRE_GAME		14
+#define END_GAME		15
 #define SPLASH_SCREEN	-1
 
 #define ENDLESS			20
@@ -114,6 +117,9 @@ int		powerup_time_on = 5; //seconds
 
 
 double street_line		= 1000;
+
+// -- kb input --
+std::vector <std::string> names(1);
 
 void init(void) {
 	glClearColor((GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.0);
@@ -450,7 +456,7 @@ void draw_c_car() {
 	glPushMatrix();
 	glRotated(180, 0, 0, 0);
 	glPushMatrix();
-	draw_car(-c_car_pos_x, -c_car_pos_y, 0.7, 0.2, 0.2);
+		draw_car(-c_car_pos_x, -c_car_pos_y, 0.7, 0.2, 0.2);
 	glPopMatrix();
 	glPopMatrix();
 
@@ -473,9 +479,79 @@ void draw_powerup() {
 		powerup_gen = 0;
 
 }
+/* TODO implement buttons start / options */
+void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, char* str) {
 
+	glPushMatrix();
+	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
+
+	if (mouse_x > btn_pos_x + btn_w / 4 && mouse_x < btn_pos_x + 2.0 * btn_w + btn_w / 4 &&
+		mouse_y > top_m - btn_pos_y - btn_h && mouse_y < top_m - btn_pos_y + btn_h) {
+		glColor3f((GLdouble)0, (GLdouble)0.5, (GLdouble)0);
+		glRecti(-btn_w - 5, -btn_h - 5, btn_w - 5, btn_h - 5);
+		RenderString((GLdouble)(-btn_w) / 2 - (GLdouble)((sizeof(*str) / sizeof(char)) / 4 + (GLdouble)5), (GLdouble)((GLdouble)-btn_h / 2 - (GLdouble)5), GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
+	}
+	else {
+		glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+		glRecti(-btn_w, -btn_h, btn_w, btn_h);
+		RenderString((GLdouble)(-btn_w) / 2 - GLdouble((sizeof(*str) / sizeof(char)) / 4 * (GLdouble)10), (GLdouble)-btn_h / 2, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
+	}
+	glPopMatrix();
+}
+void end_game() {
+	screen = END_GAME;
+	glClear(GL_COLOR_BUFFER_BIT);
+	draw_background();
+	if (c_car_pos_x < -150) {
+		c_car_pos_x = 900;
+		c_car_pos_y = c_car_pos_y_values[rand() % 3];
+	}
+	c_car_pos_x -= c_car_speed;
+	glPushMatrix();
+	draw_c_car();
+	glPopMatrix();
+
+	if (_win) {
+		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"YOU WIN! Score:");
+
+	}
+	else {
+		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
+
+	}
+	RenderString(270.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)p_score);
+
+	for (size_t i = 0; i < names.size(); ++i)
+	{
+		std::ostringstream oss;
+		oss << "NAME: " << names[i];
+
+		void* font = GLUT_BITMAP_TIMES_ROMAN_24;
+		const int fontHeight = glutBitmapHeight(font);
+		glRasterPos2i(150, 360 - (fontHeight * (i + 1)));
+		glutBitmapString(font, (const unsigned char*)(oss.str().c_str()));
+	}
+	RenderString(-50.0f, 300.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
+
+	// read from file insert str
+	for (int lb_score = 0; lb_score < 5; ++lb_score) {
+		RenderString(100.0f, 250.0f - lb_score * 50, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"MILSUGI                      3500 points");
+	}
+	// -------------------- actions ------------------
+	// main menu
+	draw_button((GLdouble)50, (GLdouble)0, 20, 100, "MAIN MENU");
+	// save score
+	draw_button((GLdouble)300, (GLdouble)0, 20, 100, "SAVE SCORE");
+	// restart
+	draw_button((GLdouble)550, (GLdouble)0, 20, 100, "RESTART");
+
+	glutPostRedisplay();
+	glutSwapBuffers();
+	glFlush();
+	Sleep(5);
+}
 void draw_scene(void)
-{	
+{
 	screen = IN_GAME;
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -492,10 +568,7 @@ void draw_scene(void)
 	// -- end game --
 	if (_run == 0) {
 		//TODO call end_screen 
-		if (_win)
-			RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"YOU WIN!");
-		else
-			RenderString(250.0f, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)"GAME OVER");
+		glutDisplayFunc(end_game);
 
 	}
 
@@ -602,37 +675,6 @@ void pre_start(void) {
 	glFlush();
 }
 
-void reshape(int w, int h)
-{
-	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-100.0, 700.0, -140.0, 460.0, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-
-
-/* TODO implement buttons start / options */
-void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, char* str) {
-
-	glPushMatrix();
-	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
-
-	if (mouse_x > btn_pos_x + btn_w/4 && mouse_x < btn_pos_x + 2.0 * btn_w + btn_w/4 &&
-		mouse_y > top_m - btn_pos_y - btn_h && mouse_y < top_m - btn_pos_y + btn_h) {
-		glColor3f((GLdouble)0, (GLdouble)0.5, (GLdouble)0);
-		glRecti(-btn_w - 5, -btn_h - 5, btn_w - 5, btn_h - 5);
-		RenderString((GLdouble)(-btn_w) / 2 - (GLdouble)((sizeof(*str) / sizeof(char)) / 4 - (GLdouble)5), (GLdouble)((GLdouble)-btn_h / 2 - (GLdouble)5), GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
-	}
-	else {
-		glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
-		glRecti(-btn_w, -btn_h, btn_w, btn_h);
-		RenderString((GLdouble)(-btn_w) / 2 - GLdouble(sizeof(*str) / sizeof(char)) / 4, (GLdouble)-btn_h / 2, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
-	}
-	glPopMatrix();
-}
 void main_menu() {
 	screen = MAIN_MENU;
 
@@ -778,6 +820,28 @@ void misca_stanga(void)
 	if (p_car_pos_x > GRID_X_LEFT) {
 		p_car_pos_x -= 10;
 		contor_x -= 1;
+	}
+
+	glutPostRedisplay();
+}
+void keyboard_input(unsigned char key, int x, int y) {
+
+	if (key == 13)
+	{
+		// enter key
+		names.push_back("");
+		// write to file 
+	}
+	else if (key == 8)
+	{
+		// backspace
+		if (names.back().size() > 0)
+			names.back().pop_back();
+	}
+	else
+	{
+		// regular text
+		names.back().push_back(key);
 	}
 
 	glutPostRedisplay();
@@ -937,6 +1001,16 @@ void mouse_pos(int x, int y) {
 	glutPostRedisplay();
 	//std::cout << "(" << x << ", " << y << ")\n";
 }
+
+void reshape(int w, int h)
+{
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-100.0, 700.0, -140.0, 460.0, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -945,10 +1019,11 @@ int main(int argc, char** argv)
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Depaseste masinile - mini game");
 	init();
-	glutSpecialFunc(keyboard);
+	glutSpecialFunc(keyboard); 
+	glutKeyboardFunc(keyboard_input);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouse_pos);
-	glutDisplayFunc(pre_game);
+	glutDisplayFunc(end_game);
 	glutReshapeFunc(reshape);
 
 
