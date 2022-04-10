@@ -40,6 +40,7 @@ GLdouble top_m = 460.0;
 int _prev_scr = -1;
 int _run = 1;
 int _win = 0;
+int _ee = 0;
 
 int screen = 0; // different screen values to determine what window is open
 int hover = 0;
@@ -92,7 +93,7 @@ int		powerup_time_on = 5; //seconds
 double street_line = 1000;
 
 void init(void) {
-	glClearColor((GLclampf)0.98, (GLclampf)0.929, (GLclampf)0.792, (GLclampf)0.0);
+	glClearColor((GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.0);
 	glMatrixMode(GL_PROJECTION);
 	glShadeModel(GL_SMOOTH);
 	glOrtho(left_m, right_m, bottom_m, top_m, -1.0, 1.0);
@@ -226,7 +227,7 @@ void draw_background() {
 
 }
 
-
+int index = 0;
 void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) {
 
 	glPushMatrix();
@@ -292,6 +293,35 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 }
 
 
+// - masina politite inceput --
+void draw_x_car(int index) {
+
+	glPushMatrix();
+	draw_car(x_car_pos_x, 160.0, 0.1, 0.5, 0.7);
+	//circoblitz
+	glPushMatrix();
+	glTranslated(x_car_pos_x + 5, 167, 0.0);
+	glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
+	if (index % 3 == 0)
+		glRecti(-12, -12, 12, 12);
+	else
+		glRecti(-10, -10, 10, 10);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslated(x_car_pos_x + 5, 153, 0.0);
+	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
+	if (index % 3 != 0)
+		glRecti(-12, -12, 12, 12);
+	else
+		glRecti(-10, -10, 10, 10);
+	glPopMatrix();
+
+	glPopMatrix();
+
+	glPopMatrix();
+}
+
 // -- masina playerului --
 void draw_p_car() {
 	//Sleep(25);
@@ -354,9 +384,33 @@ void draw_p_car() {
 
 	}
 
-	glPushMatrix();
-	draw_car(p_car_pos_x, p_car_pos_y, 0.5, 0.2, 0.5);
-	glPushMatrix();
+	if (_ee) {
+		++index;
+		draw_car(p_car_pos_x, p_car_pos_y, 0.1, 0.5, 0.7);
+		//circoblitz
+		glPushMatrix();
+		glTranslated(p_car_pos_x + 5, p_car_pos_y + 7, 0.0);
+		glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
+		if (index % 3 == 0)
+			glRecti(-12, -12, 12, 12);
+		else
+			glRecti(-10, -10, 10, 10);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(p_car_pos_x + 5, p_car_pos_y - 7, 0.0);
+		glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
+		if (index % 3 != 0)
+			glRecti(-12, -12, 12, 12);
+		else
+			glRecti(-10, -10, 10, 10);
+		glPopMatrix();
+
+		glPopMatrix();
+	}
+	else 
+		draw_car(p_car_pos_x, p_car_pos_y, 0.5, 0.2, 0.5);
+
 
 
 	glPopMatrix();
@@ -375,34 +429,7 @@ void draw_c_car() {
 
 }
 
-// - masina politite inceput --
-void draw_x_car(int index) {
 
-	glPushMatrix();
-	draw_car(x_car_pos_x, 160.0, 0.1, 0.5, 0.7);
-	//circoblitz
-	glPushMatrix();
-	glTranslated(x_car_pos_x + 5, 167, 0.0);
-	glColor3f((GLfloat)1, (GLfloat)0, (GLfloat)0);
-	if (index % 3 == 0)
-		glRecti(-12, -12, 12, 12);
-	else
-		glRecti(-10, -10, 10, 10);
-	glPopMatrix();
-
-	glPushMatrix();
-	glTranslated(x_car_pos_x + 5, 153, 0.0);
-	glColor3f((GLfloat)0, (GLfloat)0, (GLfloat)1);
-	if (index % 3 != 0)
-		glRecti(-12, -12, 12, 12);
-	else
-		glRecti(-10, -10, 10, 10);
-	glPopMatrix();
-
-	glPopMatrix();
-
-	glPopMatrix();
-}
 void draw_powerup() {
 	if (powerup_gen) {
 		glPushMatrix();
@@ -455,7 +482,7 @@ void draw_scene(void)
 int first_anim = 1;
 int dialogue = 0;
 int sec_anim = 0;
-int index = 0;
+
 int next_chr = 0;
 char text[27] = "CATCH ME IF YOU CAN HAHAHA";
 char aux[] = "";
@@ -533,6 +560,15 @@ void pre_start(void) {
 
 	if (!first_anim && !sec_anim && !dialogue)
 		glutDisplayFunc(draw_scene);
+
+	// -- easter egg --
+	if (p_car_pos_x < -200) {
+		_ee = 1;
+		p_car_pos_x = GRID_X_LEFT;
+		p_car_pos_y = GRID_Y_MID;
+		glutDisplayFunc(draw_scene);
+		
+	}
 
 	glutPostRedisplay();
 	glutSwapBuffers();
