@@ -6,8 +6,8 @@
 
 - [x] utilizarea primitivelor;
 - [x] utilizarea transformarilor (indicate cu functii standard sau folosind matrice);
-- [ ] compunerea transformarilor; stive de matrice;
-- [ ] input interactiv (utilizare mouse, citire date din fisier/de la consola)
+- [x] compunerea transformarilor; stive de matrice;
+- [x] input interactiv (utilizare mouse, citire date din fisier/de la consola)
 
 ### 4p:
 
