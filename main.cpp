@@ -728,7 +728,6 @@ void top_scores_screen() {
 		std::string line = player.name + " . . . . . . . . . . . . " + std::to_string(player.score);
 		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
 		dim -= 50.0f;
-
 	}
 
 	glutSwapBuffers();
