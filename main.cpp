@@ -53,6 +53,7 @@ GLdouble top_m = 460.0;
 
 int _prev_scr = -1;
 
+
 int _run = 1;
 int _win = 0;
 int _ee = 0;
@@ -141,6 +142,16 @@ std::ofstream file_scores_w;
 
 // -- kb input --
 std::vector <std::string> names(1);
+
+// -- scores --
+struct Score
+{
+	std::string name;
+	int score;
+};
+std::vector<Score> scores;
+std::ifstream file_scores_r;
+std::ofstream file_scores_w;
 
 void init(void) {
 	glClearColor((GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.0);
@@ -1164,6 +1175,39 @@ bool compare_scores(Score score1, Score score2) {
 
 void top_scores_screen() {
 	screen = LEAD_B;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
+	RenderString(200.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TOP 5 PLAYERS");
+	float dim = 200.0f;
+	std::sort(scores.begin(), scores.end(), compare_scores);
+	for (auto player : scores) {
+		std::string line = player.name + " . . . . . . . . . . . . " + std::to_string(player.score);
+		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
+		dim -= 50.0f;
+	}
+
+	glutSwapBuffers();
+	glFlush();
+}
+
+void load_scores() {
+	Score player;
+	file_scores_r.open("scores.txt");
+	while (file_scores_r.is_open() && !file_scores_r.eof())
+	{
+		file_scores_r >> player.name >> player.score;
+		std::cout << player.name << player.score;
+		scores.push_back(player);
+	}
+	//file_scores_r.close();
+}
+
+bool compare_scores(Score score1, Score score2) {
+	return score1.score > score2.score;
+}
+
+void top_scores_screen() {
+	screen = SCORES_SCREEN;
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
 	RenderString(200.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TOP 5 PLAYERS");
