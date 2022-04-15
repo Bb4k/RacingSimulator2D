@@ -130,16 +130,16 @@ double street_line = 1000;
 
 // -- kb input --
 std::vector <std::string> names(1);
+std::string username;
 
 // -- scores --
-struct Score
+class Score
 {
+public:
 	std::string name;
 	int score;
 };
-std::vector<Score> scores;
-std::ifstream file_scores_r;
-std::ofstream file_scores_w;
+
 
 void init(void) {
 	glClearColor((GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.0);
@@ -154,6 +154,58 @@ void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* strin
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glRasterPos2f((GLfloat)x, (GLfloat)y);
 	glutBitmapString(font, string);
+
+}
+
+bool compare_scores(Score score1, Score score2) {
+	return score1.score > score2.score;
+}
+
+std::vector<Score> scores_global;
+int scores_loaded = 0;
+
+void top_scores_screen() {
+
+
+	if (!scores_loaded) {
+		scores_loaded = 1;
+		screen = LEAD_B;
+		std::ifstream file_scores_r("scores.txt");
+
+		Score player;
+		std::vector<Score> scores;
+
+		while (file_scores_r.is_open() && !file_scores_r.eof())
+		{
+			file_scores_r >> player.name >> player.score;
+			scores.push_back(player);
+
+		}
+		player.name = username;
+		//player.name = "---sdfsdf---";
+		player.score = p_score;
+
+		scores.push_back(player);
+		file_scores_r.close();
+		std::sort(scores.begin(), scores.end(), compare_scores);
+		scores_global = scores;
+		
+	}
+
+	std::ofstream file_scores_w("scores.txt");
+
+	RenderString(-50.0f, 300.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
+	float dim = 200.0f;
+	int size = scores_global.size() > 5 ? 5 : scores_global.size();
+	
+	for (int i = 0; i < size; i++) {
+		std::string line = scores_global[i].name + " . . . . . . . . . . . . " + std::to_string(scores_global[i].score);
+		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
+		dim -= 50.0f;
+		file_scores_w << scores_global[i].name << ' ' << scores_global[i].score << '\n';
+	}
+	file_scores_w.close();
+
 
 }
 
@@ -343,7 +395,6 @@ void draw_car(double x_car_pos, double y_car_pos, double r, double g, double b) 
 
 }
 
-
 // - masina politite inceput --
 void draw_x_car(int index) {
 
@@ -478,6 +529,7 @@ void draw_p_car() {
 	glPopMatrix();
 
 }
+
 // -- masinia din contrasens --
 void draw_c_car() {
 	glPushMatrix();
@@ -506,6 +558,7 @@ void draw_powerup() {
 		powerup_gen = 0;
 
 }
+
 /* TODO implement buttons start / options */
 void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, char* str) {
 
@@ -525,6 +578,7 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 	}
 	glPopMatrix();
 }
+
 void end_game() {
 
 	screen = END_GAME;
@@ -547,30 +601,15 @@ void end_game() {
 		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
 
 	RenderString(500.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
+	
 
-	for (size_t i = 0; i < names.size(); ++i)
-	{
-		std::ostringstream oss;
-		oss << "NAME: " << names[i];
+	// -------------------- leaderboard ------------------
+	top_scores_screen();
 
-		void* font = GLUT_BITMAP_TIMES_ROMAN_24;
-		const int fontHeight = glutBitmapHeight(font);
-		glRasterPos2i(150, 360 - (fontHeight * (i + 1)));
-		glutBitmapString(font, (const unsigned char*)(oss.str().c_str()));
-	}
-
-	//top_scores_screen();
-	RenderString(-50.0f, 300.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
-
-	// read from file insert str
-	for (int lb_score = 0; lb_score < 5; ++lb_score) {
-		RenderString(100.0f, 250.0f - lb_score * 50, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TEST                      3500 points");
-	}
 	// -------------------- actions ------------------
 	// main menu
 	draw_button((GLdouble)50, (GLdouble)0, 20, 100, "MAIN MENU");
-	// save score
-	draw_button((GLdouble)300, (GLdouble)0, 20, 100, "SAVE SCORE");
+
 	// restart
 	draw_button((GLdouble)550, (GLdouble)0, 20, 100, "RESTART");
 
@@ -865,8 +904,8 @@ void pre_game() {
 		p_car_color_values[p_car_selected_color][2]);//b
 
 
-//  ----------------------------------- game mode --------------------------------------------
-// campaign (default)
+	//  ----------------------------------- game mode --------------------------------------------
+	// campaign (default)
 	draw_button((GLdouble)300, (GLdouble)320, 20, 75, "NEXT");
 
 	// endless 
@@ -876,7 +915,17 @@ void pre_game() {
 		RenderString(100.0f, 320.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"ENDLESS");
 	else if (game_mode == CAMPAIGN)
 		RenderString(85.0f, 320.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"CAMPAIGN");
-	// -------------------------------------------------------------------------------------------
+	//  ----------------------------------- username --------------------------------------------
+	// read from file insert str
+	for (size_t i = 0; i < names.size(); ++i)
+	{
+		std::ostringstream oss;
+		oss << "NAME: " << names[i];
+		void* font = GLUT_BITMAP_TIMES_ROMAN_24;
+		const int fontHeight = glutBitmapHeight(font);
+		glRasterPos2i(400, 360 - (fontHeight * (i + 1)));
+		glutBitmapString(font, (const unsigned char*)(oss.str().c_str()));
+	}
 
 	//  ----------------------------------- actions --------------------------------------------
 	// back to menu
@@ -917,6 +966,7 @@ void misca_sus(void) {
 	}
 	glutPostRedisplay();
 }
+
 void misca_jos(void) {
 	if (p_car_pos_y > 0) {
 		contor_y = -1;
@@ -924,6 +974,7 @@ void misca_jos(void) {
 	}
 	glutPostRedisplay();
 }
+
 void misca_dreapta(void) {
 	if (p_car_pos_x < GRID_X_RIGHT) {
 		p_car_pos_x += 10;
@@ -931,6 +982,7 @@ void misca_dreapta(void) {
 	}
 	glutPostRedisplay();
 }
+
 void misca_stanga(void)
 {
 	if (p_car_pos_x > GRID_X_LEFT) {
@@ -940,6 +992,7 @@ void misca_stanga(void)
 
 	glutPostRedisplay();
 }
+
 void keyboard_input(unsigned char key, int x, int y) {
 
 	if (key == 13)
@@ -962,6 +1015,7 @@ void keyboard_input(unsigned char key, int x, int y) {
 
 	glutPostRedisplay();
 }
+
 void keyboard(int key, int x, int y)
 {
 
@@ -1017,6 +1071,9 @@ void leftclick(int x, int y) {
 
 		// start
 		if (x > 525 && x < 675 && y > 200 && y < 240) {
+			for (auto letter : names)
+				username += letter;
+
 			glutDisplayFunc(pre_start);
 			break;
 		}
@@ -1072,13 +1129,12 @@ void leftclick(int x, int y) {
 		break;
 	case END_GAME:
 		if (x > 20 && x < 175 && y > 445 && y < 480) {
-			//call func
-		}
-		if (x > 20 && x < 175 && y > 445 && y < 480) {
+			screen = MAIN_MENU;
 			glutDisplayFunc(main_menu);
 			break;
 		}
 		if (x > 20 && x < 175 && y > 445 && y < 480) {
+			screen = IN_GAME;
 			p_score = 0;
 			c_car_speed = 1;
 			glutDisplayFunc(draw_scene);
@@ -1147,43 +1203,8 @@ void reshape(int w, int h)
 	glLoadIdentity();
 }
 
-
-bool compare_scores(Score score1, Score score2) {
-	return score1.score > score2.score;
-}
-
-void load_scores() {
-	Score player;
-	file_scores_r.open("scores.txt");
-	while (file_scores_r.is_open() && !file_scores_r.eof())
-	{
-		file_scores_r >> player.name >> player.score;
-		std::cout << player.name << player.score;
-		scores.push_back(player);
-	}
-	//file_scores_r.close();
-}
-
-void top_scores_screen() {
-	screen = LEAD_B;
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
-	RenderString(200.0f, 250.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TOP 5 PLAYERS");
-	float dim = 200.0f;
-	std::sort(scores.begin(), scores.end(), compare_scores);
-	for (auto player : scores) {
-		std::string line = player.name + " . . . . . . . . . . . . " + std::to_string(player.score);
-		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
-		dim -= 50.0f;
-	}
-
-	glutSwapBuffers();
-	glFlush();
-}
-
 int main(int argc, char** argv)
 {
-	//load_scores();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(800, 600);
