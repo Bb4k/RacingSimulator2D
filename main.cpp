@@ -182,7 +182,6 @@ void top_scores_screen() {
 
 		}
 		player.name = username;
-		//player.name = "---sdfsdf---";
 		player.score = p_score;
 
 		scores.push_back(player);
@@ -917,6 +916,7 @@ void pre_game() {
 		RenderString(85.0f, 320.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"CAMPAIGN");
 	//  ----------------------------------- username --------------------------------------------
 	// read from file insert str
+
 	for (size_t i = 0; i < names.size(); ++i)
 	{
 		std::ostringstream oss;
@@ -926,6 +926,7 @@ void pre_game() {
 		glRasterPos2i(400, 360 - (fontHeight * (i + 1)));
 		glutBitmapString(font, (const unsigned char*)(oss.str().c_str()));
 	}
+
 
 	//  ----------------------------------- actions --------------------------------------------
 	// back to menu
@@ -998,7 +999,7 @@ void keyboard_input(unsigned char key, int x, int y) {
 	if (key == 13)
 	{
 		// enter key
-		names.push_back("");
+		//names.push_back("");
 		// write to file 
 	}
 	else if (key == 8)
@@ -1130,6 +1131,13 @@ void leftclick(int x, int y) {
 	case END_GAME:
 		if (x > 20 && x < 175 && y > 445 && y < 480) {
 			screen = MAIN_MENU;
+			c_car_speed = 1;
+			p_car_angle = 0;
+			p_car_crashed = 0;
+			_run = 1;
+			p_score = 0;
+			p_car_pos_x = GRID_X_LEFT;
+			p_car_pos_y = GRID_Y_MID;
 			glutDisplayFunc(main_menu);
 			break;
 		}
