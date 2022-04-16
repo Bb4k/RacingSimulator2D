@@ -18,10 +18,15 @@
 #include <sstream>
 #include <vector>
 #include <algorithm> 
+#include <map>
 
 // --site-packages--
 #include <GL/freeglut.h>
 
+// --sound-packages--
+#include <irrKlang.h>
+
+#pragma comment(lib, "irrKlang.lib")
 
 // -- defines work area --
 GLdouble left_m = -100.0;
@@ -141,12 +146,29 @@ public:
 };
 
 
+/////////////////////////////////////////////////////////////////////////////
+// sound engine declaration and bg_soundtrack initialization
+/////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------------------------*/
+
+float MASTER_VOLUME = 0.5;
+
+irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
+
+irrklang::ISound* bg_menu_soundtrack = engine->play2D(
+	"Sounds/car_chase.mp3", true, false, true, irrklang::ESM_STREAMING);
+
+irrklang::ISound* bg_racing_soundtrack;
+irrklang::ISound* bg_ending;
+
+/*-----------------------------------------------------------------------------------------------*/
+
 void init(void) {
 	glClearColor((GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.6, (GLclampf)0.0);
 	glMatrixMode(GL_PROJECTION);
 	glShadeModel(GL_SMOOTH);
 	glOrtho(left_m, right_m, bottom_m, top_m, -1.0, 1.0);
-	srand(time(NULL));
+	srand(time(nullptr));
 }
 
 void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* string) {
@@ -528,8 +550,7 @@ void draw_p_car() {
 	glPopMatrix();
 
 }
-
-// -- masinia din contrasens --
+// -- masina din contrasens --
 void draw_c_car() {
 	glPushMatrix();
 	glRotated(180, 0, 0, 0);
@@ -578,6 +599,17 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 	glPopMatrix();
 }
 
+void draw_audio_settings() {
+	draw_button(240, 240, 20, 20, "-");
+
+	char buffer[32];
+	int n;
+	n = sprintf(buffer, "%.0f", MASTER_VOLUME*100);
+	RenderString(280.f, 220.f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)buffer);
+
+	draw_button(360, 240, 20, 20, "+");
+}
+
 void end_game() {
 
 	screen = END_GAME;
@@ -622,8 +654,19 @@ int go_anim = 1;
 
 void game_over_anim() {
 
-	if (!go_anim)
+	if (!go_anim) {
+
+		/*---------------------------------------------------------------------------------*/
+		if (bg_racing_soundtrack) {
+			bg_racing_soundtrack->stop();
+			bg_racing_soundtrack->drop();
+		}
+		bg_ending = engine->play2D("Sounds/farewell.wav", true, false, true);
+		bg_ending->setVolume(1.0f * MASTER_VOLUME);
+
+		/*---------------------------------------------------------------------------------*/
 		glutDisplayFunc(end_game);
+	}
 
 	p_car_crashed = 1;
 	screen = ANIM;
@@ -708,11 +751,30 @@ int first_anim = 1;
 int dialogue = 0;
 int sec_anim = 0;
 
-int next_chr = 0;
-char text[27] = "CATCH ME";
+int next_chr = 1;
+char text[9] = "CATCH ME";
 char aux[] = "";
 
 void pre_start(void) {
+
+	/*-----------------------------------------------------------------------------------------------*/
+	if (bg_menu_soundtrack) {
+		bg_menu_soundtrack->stop();
+		bg_menu_soundtrack->drop();
+		bg_menu_soundtrack = 0;
+	}
+
+	// bg_racing_soundtrack->setVolume(0.1f * MASTER_VOLUME);
+	// lower the volume in order for the typing sound to be audible
+
+	irrklang::ISound* typing_s = engine->play2D(
+		"Sounds/typing_sfx.wav",
+		false,
+		true,
+		irrklang::ESM_NO_STREAMING);
+
+	bool typing_p = false;
+	/*-----------------------------------------------------------------------------------------------*/
 
 	screen = IN_GAME;
 
@@ -741,18 +803,23 @@ void pre_start(void) {
 			dialogue = 1;
 			first_anim = 0;
 		}
-
-
 	}
 
 	if (dialogue == 1) {
+
+		if (!typing_p) {
+			typing_p = true;
+			typing_s->setIsPaused(false);
+		}
+
 		draw_background();
 		draw_x_car(index);
 		Sleep(15); //slow-mo
+
 		if (next_chr <= strlen(text)) {
 
 			strncpy(aux, text, next_chr);
-			RenderString(300, 200.0f, GLUT_BITMAP_8_BY_13, (const unsigned char*)aux);
+			RenderString(300.f, 200.f, GLUT_BITMAP_8_BY_13, (const unsigned char*)aux);
 			Sleep(100);
 			++next_chr;
 		}
@@ -795,9 +862,9 @@ void pre_start(void) {
 		dialogue = 0;
 		glutDisplayFunc(draw_scene);
 
-		
+		bg_racing_soundtrack->setVolume(1.0f * MASTER_VOLUME);
 	}
-
+		
 	// -- easter egg --
 	if (p_car_pos_x < -200) {
 		_ee = 1;
@@ -806,6 +873,13 @@ void pre_start(void) {
 		glutDisplayFunc(draw_scene);
 
 	}
+
+	/*-------------------------------- free allocated resources -------------------------------------*/
+
+	typing_s->stop();
+	typing_s->drop();
+
+	/*-----------------------------------------------------------------------------------------------*/
 
 	glutPostRedisplay();
 	glutSwapBuffers();
@@ -841,6 +915,7 @@ void main_menu() {
 
 	// -- options button --
 	draw_button((GLdouble)300, (GLdouble)200, 20, 100, "OPTIONS");
+
 	//RenderString(250.0f, 190.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"OPTIONS");
 
 	glutPostRedisplay();
@@ -860,6 +935,9 @@ void options_screen() {
 
 	// -- start button --
 	draw_button(300, 300, 20, 100, "BACK");
+	draw_audio_settings();
+
+	glutPostRedisplay();
 	//RenderString(265.0f, 290.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"BACK");
 
 	glutSwapBuffers();
@@ -1065,11 +1143,37 @@ void leftclick(int x, int y) {
 		}
 		break;
 	case OPTIONS:
-		std::cout << "inside options left click";
+		// std::cout << "inside options left click";
+
 		if (x > 300 && x < 500 && y > 140 && y < 180) {
 			glutDisplayFunc(main_menu);
 			break;
 		}
+
+		if (x > 320 && x < 360 && y > 200 && y < 240) {
+			if (MASTER_VOLUME > 0.) {
+				MASTER_VOLUME -= 0.01f;
+			}
+
+			if (bg_menu_soundtrack) {
+				bg_menu_soundtrack->setVolume(MASTER_VOLUME);
+			}
+			break;
+		}
+
+		if (x > 440 && x < 480 && y > 200 && y < 240) {
+			if (MASTER_VOLUME < 1.) {
+				MASTER_VOLUME += 0.01f;
+			}
+
+			if (bg_menu_soundtrack) {
+				bg_menu_soundtrack->setVolume(MASTER_VOLUME);
+			}
+			break;
+		}
+
+		std::cout << "BUTTON CLICKED::" << x << '\t' << y << std::endl;
+
 		break;
 	case IN_GAME:
 		std::cout << "inside game left click";
@@ -1081,13 +1185,23 @@ void leftclick(int x, int y) {
 
 		// start
 		if (x > 525 && x < 675 && y > 200 && y < 240) {
+
+			bg_racing_soundtrack = engine->play2D(
+				"Sounds/moonlight_8bit.wav",
+				true,
+				false,
+				true
+			);
+
+			bg_racing_soundtrack->setVolume(0.1f * MASTER_VOLUME);
 			for (auto letter : names)
 				username += letter;
 
 			glutDisplayFunc(pre_start);
+
 			break;
 		}
-		// back 
+		// MASTER 
 		if (x > 525 && x < 675 && y > 360 && y < 400) {
 			glutDisplayFunc(main_menu);
 			break;
@@ -1127,7 +1241,7 @@ void leftclick(int x, int y) {
 		// -- right arrow change color --
 		if (x > 325 && x < 475 && y > 445 && y < 480) {
 			//next color
-			std::cout << sizeof(p_car_color_values) / sizeof(p_car_color_values[0]);
+			//std::cout << sizeof(p_car_color_values) / sizeof(p_car_color_values[0]);
 			if (p_car_selected_color < sizeof(p_car_color_values) / sizeof(p_car_color_values[0]) - 1) {
 				p_car_color_r = p_car_color_values[p_car_selected_color + 1][0];
 				p_car_color_g = p_car_color_values[p_car_selected_color + 1][1];
@@ -1136,8 +1250,10 @@ void leftclick(int x, int y) {
 			}
 			break;
 		}
+
 		break;
 	case END_GAME:
+
 		if (x > 20 && x < 175 && y > 445 && y < 480) {
 			screen = MAIN_MENU;
 			c_car_speed = 1;
@@ -1166,6 +1282,7 @@ void leftclick(int x, int y) {
 	default:
 		break;
 	}
+
 }
 
 void rightclick(int x, int y) {
@@ -1211,7 +1328,7 @@ void mouse_pos(int x, int y) {
 	glutPostRedisplay();
 	if (screen == MAIN_MENU)
 		c_car_speed = 10;
-	std::cout << "(" << x << ", " << y << ")\n";
+	//std::cout << "(" << x << ", " << y << ")\n";
 }
 
 void reshape(int w, int h)
@@ -1226,11 +1343,22 @@ void reshape(int w, int h)
 
 int main(int argc, char** argv)
 {
+	
+	///////////////////////////////////////////////////////////////////////////
+	// Added sound effects
+	///////////////////////////////////////////////////////////////////////////
+
+	if (!engine) {
+		std::cerr << "ERROR::IRRKLANG: Could not load sound engine" << std::endl;
+		return -1;
+	}
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Depaseste masinile - mini game");
+
 	init();
 	glutSpecialFunc(keyboard);
 	glutKeyboardFunc(keyboard_input);
@@ -1239,6 +1367,13 @@ int main(int argc, char** argv)
 	glutDisplayFunc(splash_screen);
 	glutReshapeFunc(reshape);
 
-
 	glutMainLoop();
+	
+	if (bg_ending) {
+		bg_ending->stop();
+		bg_ending->drop();
+	}
+	engine->drop(); // delete engine
+
+	return 0;
 }
