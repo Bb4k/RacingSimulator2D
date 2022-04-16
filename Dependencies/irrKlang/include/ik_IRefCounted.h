@@ -90,7 +90,7 @@ namespace irrklang
 		//! 
 		//! If you want to play a sound, you may want to call the method
 		//! ISoundEngine::play2D. You call
-		//! ISound* mysound = engine->play2D("foobar.mp3", false, false, true);
+		//! ISound* mysound = engine->play2D("foobar.mp3", false, false true);
 		//! If you no longer need the sound interface, call mysound->drop(). The 
 		//! sound may still play on after this because the engine still has a reference
 		//! to that sound, but you can be sure that it's memory will be released as soon
