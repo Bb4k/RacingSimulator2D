@@ -786,8 +786,17 @@ void pre_start(void) {
 	}
 
 
-	if (!first_anim && !sec_anim && !dialogue)
+	if (!first_anim && !sec_anim && !dialogue) {
+		p_car_pos_x = GRID_X_LEFT;
+		p_car_pos_y = GRID_Y_MID;
+
+		first_anim = 1;
+		sec_anim = 0;
+		dialogue = 0;
 		glutDisplayFunc(draw_scene);
+
+		
+	}
 
 	// -- easter egg --
 	if (p_car_pos_x < -200) {
@@ -901,7 +910,7 @@ void pre_game() {
 	draw_car(150, 160, p_car_color_values[p_car_selected_color][0], //r
 		p_car_color_values[p_car_selected_color][1], //g
 		p_car_color_values[p_car_selected_color][2]);//b
-
+	x_car_pos_x = -200;
 
 	//  ----------------------------------- game mode --------------------------------------------
 	// campaign (default)
@@ -1136,8 +1145,6 @@ void leftclick(int x, int y) {
 			p_car_crashed = 0;
 			_run = 1;
 			p_score = 0;
-			p_car_pos_x = GRID_X_LEFT;
-			p_car_pos_y = GRID_Y_MID;
 			glutDisplayFunc(main_menu);
 			break;
 		}
