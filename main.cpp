@@ -704,6 +704,13 @@ void game_over_anim() {
 	glutSwapBuffers();
 	glFlush();
 
+	//TODO restart music
+	/*
+			sound->stop();
+			sound->drop();
+
+			sound = engine->play2D(<SAME_PARAMS>);
+	*/
 }
 
 void win_anim() {
@@ -868,6 +875,14 @@ void pre_start(void) {
 	// -- easter egg --
 	if (p_car_pos_x < -200) {
 		_ee = 1;
+
+		//TODO 
+		/*
+			STOP MENU MUSIC
+			AND START RACING
+			MUSIC NINO NINO
+		*/
+
 		p_car_pos_x = GRID_X_LEFT;
 		p_car_pos_y = GRID_Y_MID;
 		glutDisplayFunc(draw_scene);
@@ -1253,7 +1268,7 @@ void leftclick(int x, int y) {
 
 		break;
 	case END_GAME:
-
+		// MAIN MENU
 		if (x > 20 && x < 175 && y > 445 && y < 480) {
 			screen = MAIN_MENU;
 			c_car_speed = 1;
@@ -1265,6 +1280,7 @@ void leftclick(int x, int y) {
 			glutDisplayFunc(main_menu);
 			break;
 		}
+		// RESTART
 		if (x > 550 && x < 750 && y > 445 && y < 480) {
 			screen = IN_GAME;
 			p_score = 0;
@@ -1277,7 +1293,6 @@ void leftclick(int x, int y) {
 			glutDisplayFunc(pre_start);
 			break;
 		}
-
 		break;
 	default:
 		break;
