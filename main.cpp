@@ -29,10 +29,10 @@
 #pragma comment(lib, "irrKlang.lib")
 
 // -- defines work area --
-GLdouble left_m			= -100.0;
-GLdouble right_m		= 700.0;
-GLdouble bottom_m		= -140.0;
-GLdouble top_m			= 460.0;
+GLdouble left_m = -100.0;
+GLdouble right_m = 700.0;
+GLdouble bottom_m = -140.0;
+GLdouble top_m = 460.0;
 
 // -- logic game grid --
 #define GRID_Y_LOWER	0
@@ -64,19 +64,10 @@ int _win = 0;
 int _ee = 0;
 int game_mode = 20;
 
-#define ENDLESS			20
-#define CAMPAIGN		21
-
-int _prev_scr			= -1;
-int _run				= 1;
-int _win				= 0;
-int _ee					= 0;
-int game_mode			= 20;
-
-int screen				= 0; // different screen values to determine what window is open
-int hover				= 0;
-int mouse_x				= 0;
-int mouse_y				= 0;
+int screen = 0; // different screen values to determine what window is open
+int hover = 0;
+int mouse_x = 0;
+int mouse_y = 0;
 
 // -- p(layer)_car status --
 double	p_car_pos_y = GRID_Y_MID;
@@ -125,27 +116,22 @@ double	c_car_pos_y = c_car_pos_y_values[rand() % 2];
 double	c_car_speed = 1;
 double	c_car_max_speed = 3;
 
-double	x_car_pos_x		= -350;
+double	x_car_pos_x = -350;
 
 // -- general game status --
 #define WIN_SCORE		20000
 int		p_score = 0;
 int		pts_to_speed_incr = 100;	// speed increase rate
-double	action_speed	= 0;	// when accel/brake speedup/slowdown everythng a bit to seem more realistic
+double	action_speed = 0;	// when accel/brake speedup/slowdown everythng a bit to seem more realistic
 	// -- powerups --
-int		powerup_gen		= 0;
-int		powerup_pos_x	= 0;
-int		powerup_pos_y	= 0;
-int		powerup_size	= 20;
+int		powerup_gen = 0;
+int		powerup_pos_x = 0;
+int		powerup_pos_y = 0;
+int		powerup_size = 20;
 int		powerup_time_on = 5; //seconds
 
 
-double street_line		= 1000;
-
-
-
-// -- kb input --
-std::vector <std::string> names(1);
+double street_line = 1000;
 
 // -- kb input --
 std::vector <std::string> names(1);
@@ -182,6 +168,7 @@ void init(void) {
 	glMatrixMode(GL_PROJECTION);
 	glShadeModel(GL_SMOOTH);
 	glOrtho(left_m, right_m, bottom_m, top_m, -1.0, 1.0);
+	srand(time(nullptr));
 }
 
 void RenderString(GLdouble x, GLdouble y, void* font, const unsigned char* string) {
@@ -223,7 +210,7 @@ void top_scores_screen() {
 		file_scores_r.close();
 		std::sort(scores.begin(), scores.end(), compare_scores);
 		scores_global = scores;
-		
+
 	}
 
 	std::ofstream file_scores_w("scores.txt");
@@ -231,7 +218,7 @@ void top_scores_screen() {
 	RenderString(-50.0f, 300.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
 	float dim = 200.0f;
 	int size = scores_global.size() > 5 ? 5 : scores_global.size();
-	
+
 	for (int i = 0; i < size; i++) {
 		std::string line = scores_global[i].name + " . . . . . . . . . . . . " + std::to_string(scores_global[i].score);
 		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
@@ -264,10 +251,7 @@ void startgame(void) {
 			c_car_speed += 0.05;
 		}
 
-		if (p_score >= pts_to_speed_incr && pts_to_speed_incr <= WIN_SCORE) {
-			c_car_speed += 0.1;
-			pts_to_speed_incr = p_score + 200;
-		}
+		/*	if (p_score >= pts_to_speed_incr) {
 
 			}*/
 
@@ -492,7 +476,18 @@ void draw_p_car() {
 	}
 	else if (contor_y == -1 && (p_car_pos_y != GRID_Y_MID && p_car_pos_y != GRID_Y_LOWER)) {
 		p_car_pos_y = p_car_pos_y - 1;
-		glRotated(-3, 0, 0, 1);
+		if (p_car_pos_y < GRID_Y_MID && p_car_pos_y >(GRID_Y_LOWER + (GRID_Y_UPPER - GRID_Y_MID) / 2)) {
+			glRotatef(p_car_angle - 0.04, 0, 0, 1);
+			p_car_angle -= 0.04;
+		}
+		else if (p_car_pos_y < GRID_Y_UPPER && p_car_pos_y > GRID_Y_MID + (GRID_Y_UPPER - GRID_Y_MID) / 2) {
+			glRotatef(p_car_angle - 0.04, 0, 0, 1);
+			p_car_angle -= 0.04;
+		}
+		else {
+			glRotatef(p_car_angle + 0.04, 0, 0, 1);
+			p_car_angle += 0.04;
+		}
 		p_car_moving_y = 1;
 	}
 	else {
@@ -554,19 +549,13 @@ void draw_p_car() {
 	glPopMatrix();
 	glPopMatrix();
 
-
-
-	glPopMatrix();
-	glPopMatrix();
-	glPopMatrix();
-
 }
 // -- masina din contrasens --
 void draw_c_car() {
 	glPushMatrix();
 	glRotated(180, 0, 0, 0);
 	glPushMatrix();
-		draw_car(-c_car_pos_x, -c_car_pos_y, 0.7, 0.2, 0.2);
+	draw_car(-c_car_pos_x, -c_car_pos_y, 0.7, 0.2, 0.2);
 	glPopMatrix();
 	glPopMatrix();
 
@@ -615,7 +604,7 @@ void draw_audio_settings() {
 
 	char buffer[32];
 	int n;
-	n = sprintf(buffer, "%.0f", MASTER_VOLUME*100);
+	n = sprintf(buffer, "%.0f", MASTER_VOLUME * 100);
 	RenderString(280.f, 220.f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)buffer);
 
 	draw_button(360, 240, 20, 20, "+");
@@ -643,7 +632,7 @@ void end_game() {
 		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
 
 	RenderString(500.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
-	
+
 
 	// -------------------- leaderboard ------------------
 	top_scores_screen();
@@ -722,129 +711,6 @@ void win_anim() {
 	glutDisplayFunc(end_game);
 }
 
-}
-/* TODO implement buttons start / options */
-void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, char* str) {
-
-	glPushMatrix();
-	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
-
-	if (mouse_x > btn_pos_x + btn_w / 4 && mouse_x < btn_pos_x + 2.0 * btn_w + btn_w / 4 &&
-		mouse_y > top_m - btn_pos_y - btn_h && mouse_y < top_m - btn_pos_y + btn_h) {
-		glColor3f((GLdouble)0, (GLdouble)0.5, (GLdouble)0);
-		glRecti(-btn_w - 5, -btn_h - 5, btn_w - 5, btn_h - 5);
-		RenderString((GLdouble)(-btn_w) / 2 - (GLdouble)((sizeof(*str) / sizeof(char)) / 4 + (GLdouble)5), (GLdouble)((GLdouble)-btn_h / 2 - (GLdouble)5), GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
-	}
-	else {
-		glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
-		glRecti(-btn_w, -btn_h, btn_w, btn_h);
-		RenderString((GLdouble)(-btn_w) / 2 - GLdouble((sizeof(*str) / sizeof(char)) / 4 * (GLdouble)10), (GLdouble)-btn_h / 2, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
-	}
-	glPopMatrix();
-}
-void end_game() {
-
-	screen = END_GAME;
-	glClear(GL_COLOR_BUFFER_BIT);
-	c_car_speed = 1;
-	draw_background();
-
-	if (c_car_pos_x < -150) {
-		c_car_pos_x = 900;
-		c_car_pos_y = c_car_pos_y_values[rand() % 3];
-	}
-	c_car_pos_x -= c_car_speed;
-	glPushMatrix();
-		draw_c_car();
-	glPopMatrix();
-
-	if (_win)
-		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"YOU WIN! Score:");
-	else 
-		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
-	
-	RenderString(500.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
-
-	for (size_t i = 0; i < names.size(); ++i)
-	{
-		std::ostringstream oss;
-		oss << "NAME: " << names[i];
-
-		void* font = GLUT_BITMAP_TIMES_ROMAN_24;
-		const int fontHeight = glutBitmapHeight(font);
-		glRasterPos2i(150, 360 - (fontHeight * (i + 1)));
-		glutBitmapString(font, (const unsigned char*)(oss.str().c_str()));
-	}
-	RenderString(-50.0f, 300.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
-
-	// read from file insert str
-	for (int lb_score = 0; lb_score < 5; ++lb_score) {
-		RenderString(100.0f, 250.0f - lb_score * 50, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"TEST                      3500 points");
-	}
-	// -------------------- actions ------------------
-	// main menu
-	draw_button((GLdouble)50, (GLdouble)0, 20, 100, "MAIN MENU");
-	// save score
-	draw_button((GLdouble)300, (GLdouble)0, 20, 100, "SAVE SCORE");
-	// restart
-	draw_button((GLdouble)550, (GLdouble)0, 20, 100, "RESTART");
-
-	glutPostRedisplay();
-	glutSwapBuffers();
-	glFlush();
-	Sleep(5);
-}
-
-int go_anim = 1;
-
-void game_over_anim() {
-
-	if (!go_anim)
-		glutDisplayFunc(end_game);
-
-	p_car_crashed = 1;
-	screen = ANIM;
-	Sleep(5);
-
-	glClear(GL_COLOR_BUFFER_BIT);
-	//glColor3f((GLfloat)0.55, (GLfloat)0.788, (GLfloat)0.451);
-
-	draw_background();
-
-	if (p_car_pos_x != GRID_X_MID && p_car_pos_y != GRID_Y_MID) {
-		p_car_pos_x -= 1 * ((p_car_pos_x - GRID_X_MID) / abs(p_car_pos_x - GRID_X_MID));
-		p_car_pos_y -= 1 * ((p_car_pos_y - GRID_Y_MID) / abs(p_car_pos_y - GRID_Y_MID));
-	}
-	
-
-	
-	if (x_car_pos_x != GRID_X_LEFT + 200)
-		x_car_pos_x = x_car_pos_x + 0.5;
-	else {
-		x_car_pos_x = GRID_X_LEFT + 200;
-		go_anim = 0;
-	}
-
-	draw_p_car();
-
-	draw_x_car(index);
-	++index;
-
-	draw_c_car();
-
-
-	
-	glutPostRedisplay();
-	glutSwapBuffers();
-	glFlush();
-	
-}
-
-void win_anim() {
-	// TODO implement win animations
-	glutDisplayFunc(end_game);
-}
-
 void draw_scene(void)
 {
 	screen = IN_GAME;
@@ -870,7 +736,7 @@ void draw_scene(void)
 			x_car_pos_x = -150;
 			glutDisplayFunc(game_over_anim);
 		}
-			
+
 
 	}
 
@@ -998,7 +864,7 @@ void pre_start(void) {
 
 		bg_racing_soundtrack->setVolume(1.0f * MASTER_VOLUME);
 	}
-		
+
 	// -- easter egg --
 	if (p_car_pos_x < -200) {
 		_ee = 1;
@@ -1020,27 +886,14 @@ void pre_start(void) {
 	glFlush();
 }
 
-	// -- easter egg --
-	if (p_car_pos_x < -200) {
-		_ee = 1;
-		p_car_pos_x = GRID_X_LEFT;
-		p_car_pos_y = GRID_Y_MID;
-		glutDisplayFunc(draw_scene);
-		
-	}
-
-	glutPostRedisplay();
-	glutSwapBuffers();
-	glFlush();
-}
-
 void main_menu() {
 	screen = MAIN_MENU;
-	
+
 	Sleep(5);
 	// -- main menu text 
 	glClear(GL_COLOR_BUFFER_BIT);
 	RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"MAIN MENU");
+	draw_background();
 
 	p_car_pos_y = 160;
 	p_car_pos_x += c_car_speed / 2;
@@ -1490,7 +1343,7 @@ void reshape(int w, int h)
 
 int main(int argc, char** argv)
 {
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	// Added sound effects
 	///////////////////////////////////////////////////////////////////////////
@@ -1515,7 +1368,7 @@ int main(int argc, char** argv)
 	glutReshapeFunc(reshape);
 
 	glutMainLoop();
-	
+
 	if (bg_ending) {
 		bg_ending->stop();
 		bg_ending->drop();
