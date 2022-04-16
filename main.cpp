@@ -1145,14 +1145,20 @@ void leftclick(int x, int y) {
 			p_car_crashed = 0;
 			_run = 1;
 			p_score = 0;
+			go_anim = 1;
 			glutDisplayFunc(main_menu);
 			break;
 		}
-		if (x > 20 && x < 175 && y > 445 && y < 480) {
+		if (x > 550 && x < 750 && y > 445 && y < 480) {
 			screen = IN_GAME;
 			p_score = 0;
-			c_car_speed = 1;
-			glutDisplayFunc(draw_scene);
+			c_car_speed = 2;
+			p_car_angle = 0;
+			p_car_crashed = 0;
+			_run = 1;
+			x_car_pos_x = -200;
+			go_anim = 1;
+			glutDisplayFunc(pre_start);
 			break;
 		}
 
