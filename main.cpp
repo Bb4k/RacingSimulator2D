@@ -18,7 +18,7 @@
 #include <vector>
 
 // --site-packages--
-#include <GL/freeglut.h>
+#include <freeglut.h>
 
 
 // -- defines work area --
@@ -494,9 +494,74 @@ void draw_powerup() {
 		powerup_gen = 0;
 
 }
+
+#define GLW_SMALL_ROUNDED_CORNER_SLICES 10 // How many vertexes you want of each corner
+
+#define glwR(rgb) ((float)(((rgb) >> 16) & 0xff) / 255)
+#define glwG(rgb) ((float)(((rgb) >> 8) & 0xff) / 255)
+#define glwB(rgb) ((float)(((rgb)) & 0xff) / 255)
+#define M_PI 3.1415
+
+typedef struct glwVec2 {
+	float x;
+	float y;
+} glwVec2;
+
+void createRoundedCorners(glwVec2* arr, int num) {
+	// Generate the corner vertexes
+	float slice = M_PI / 2 / num;
+	int i;
+	float a = 0;
+	for (i = 0; i < num; a += slice, ++i) {
+		arr[i].x = cosf(a);
+		arr[i].y = sinf(a);
+	}
+}
+
+void glwDrawRoundedRectGradientFill(float x, float y, float width, float height,
+	float radius, unsigned int topColor, unsigned int bottomColor, glwVec2 glwRoundedCorners[]) {
+	float left = x;
+	float top = y;
+	float bottom = y + height - 1;
+	float right = x + width - 1;
+	int i;
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_QUAD_STRIP);
+
+	// Draw left rounded side.
+	for (i = 0; i < GLW_SMALL_ROUNDED_CORNER_SLICES; ++i) {
+		glColor3f(glwR(bottomColor), glwG(bottomColor), glwB(bottomColor));
+		glVertex2f(left + radius - radius * glwRoundedCorners[i].x,
+			bottom - radius + radius * glwRoundedCorners[i].y);
+		glColor3f(glwR(topColor), glwG(topColor), glwB(topColor));
+		glVertex2f(left + radius - radius * glwRoundedCorners[i].x,
+			top + radius - radius * glwRoundedCorners[i].y);
+	}
+	// Draw right rounded side.
+	for (i = GLW_SMALL_ROUNDED_CORNER_SLICES - 1; i >= 0; --i) {
+		glColor3f(glwR(bottomColor), glwG(bottomColor), glwB(bottomColor));
+		glVertex2f(right - radius + radius * glwRoundedCorners[i].x,
+			bottom - radius + radius * glwRoundedCorners[i].y);
+		glColor3f(glwR(topColor), glwG(topColor), glwB(topColor));
+		glVertex2f(right - radius + radius * glwRoundedCorners[i].x,
+			top + radius - radius * glwRoundedCorners[i].y);
+	}
+	glEnd();
+}
+
 /* TODO implement buttons start / options */
 void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, char* str) {
 
+	static glwVec2 glwRoundedCorners[GLW_SMALL_ROUNDED_CORNER_SLICES] = { {0} }; // This array keep the generated vertexes of one corner
+	createRoundedCorners(glwRoundedCorners, GLW_SMALL_ROUNDED_CORNER_SLICES);
+
+	glwDrawRoundedRectGradientFill(btn_pos_x, btn_pos_y, strlen(str) * 10 * 2, btn_h, 10, 000255255, 000000000, glwRoundedCorners);
+	
+	glPushMatrix();
+	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
+	RenderString((GLdouble)0, (GLdouble)0, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
+	glPopMatrix();
+	/*
 	glPushMatrix();
 	glTranslated((GLdouble)btn_pos_x, (GLdouble)btn_pos_y, 0.0);
 
@@ -512,7 +577,9 @@ void draw_button(GLdouble btn_pos_x, GLdouble btn_pos_y, int btn_h, int btn_w, c
 		RenderString((GLdouble)(-btn_w) / 2 - GLdouble((sizeof(*str) / sizeof(char)) / 4 * (GLdouble)10), (GLdouble)-btn_h / 2, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)str);
 	}
 	glPopMatrix();
+	*/
 }
+
 void end_game() {
 
 	screen = END_GAME;
