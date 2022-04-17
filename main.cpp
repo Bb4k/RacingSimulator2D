@@ -151,15 +151,68 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 /*-----------------------------------------------------------------------------------------------*/
 
-float MASTER_VOLUME = 0.5;
+class SoundEngine {
+public:
+	static SoundEngine& getInstance() {
+		static SoundEngine instance;
+		return instance;
+	}
+private:
+	SoundEngine() {
+		std::cout << "[DEBUG] Created sound engine\n";
+		this->engine = irrklang::createIrrKlangDevice();
+		if (this->engine == nullptr) {
+			std::cerr << "[ERROR] Sound engine could not be initialized\n";
+			exit(EXIT_FAILURE);
+		}
+	}
 
-irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
+	~SoundEngine() {
+		this->engine->drop();
+	}
 
-irrklang::ISound* bg_menu_soundtrack = engine->play2D(
-	"Sounds/car_chase.mp3", true, false, true, irrklang::ESM_STREAMING);
+	irrklang::ISoundEngine* engine;
+	std::map<std::string, irrklang::ISound*> playingSoundTracks;
 
-irrklang::ISound* bg_racing_soundtrack;
-irrklang::ISound* bg_ending;
+public:
+	SoundEngine(SoundEngine const&)		= delete;
+	void operator=(SoundEngine const&)	= delete;
+
+	float MASTER_VOLUME = 0.5;
+
+	// --------------   SOUND TRACKS  --------------------
+	irrklang::ISound* bg_racing_soundtrack;
+	irrklang::ISound* bg_main_menu_soundtrack;
+	irrklang::ISound* typing_soundtrack;
+	// ---------------------------------------------------
+
+	void init() {
+		this->bg_main_menu_soundtrack = this->engine->play2D(
+			"Sounds/car_chase.mp3", true, false, true, irrklang::ESM_STREAMING
+		);
+		this->bg_racing_soundtrack = this->engine->play2D(
+			"Sounds/moonlight_8bit.wav", true, true, true, irrklang::ESM_NO_STREAMING
+		);
+
+		this->playingSoundTracks.emplace(
+			std::string("bg_main_menu_soundtrack"), this->bg_main_menu_soundtrack);
+		this->playingSoundTracks.emplace(
+			std::string("bg_racing_soundtrack"), this->bg_racing_soundtrack);
+	}
+
+	void changeVolume(float value) {
+		if (MASTER_VOLUME <= 0 || MASTER_VOLUME >= 100) {
+			std::cerr << "Volume cannot be modified any further\n";
+			return;
+		}
+		MASTER_VOLUME += value;
+		for (auto&& pair = this->playingSoundTracks.begin(); pair != this->playingSoundTracks.end(); ++pair) {
+			(*pair).second->setVolume(1.f * MASTER_VOLUME);
+		}
+	}
+};
+
+SoundEngine& soundEngine = SoundEngine::getInstance();
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -186,48 +239,93 @@ bool compare_scores(Score score1, Score score2) {
 std::vector<Score> scores_global;
 int scores_loaded = 0;
 
+std::vector<std::string> split(const std::string& s, char delimiter) {
+	std::vector<std::string> result;
+	std::stringstream ss(s);
+	std::string token;
+
+	while (getline(ss, token, delimiter)) {
+		result.push_back(token);
+	}
+
+	return result;
+}
+
 void top_scores_screen() {
-
-
+	Score current_player;
 	if (!scores_loaded) {
 		scores_loaded = 1;
 		screen = LEAD_B;
-		std::ifstream file_scores_r("scores.txt");
 
 		Score player;
 		std::vector<Score> scores;
 
-		while (file_scores_r.is_open() && !file_scores_r.eof())
-		{
-			file_scores_r >> player.name >> player.score;
-			scores.push_back(player);
+		std::ifstream file_scores_r("scores.csv", std::ifstream::binary);
+		std::string buffer;
+		if (file_scores_r.is_open()) {
+			char delimiter = ',';
+			while (getline(file_scores_r, buffer)) {
+				std::vector<std::string> parsed_text = split(buffer, delimiter);
 
+				if (parsed_text.size() >= 2) {
+					// case where both the name and the score exist 
+					// inside the file
+					player.name = parsed_text.at(0);
+					player.score = std::stoi(parsed_text.at(1));
+				}
+				else {
+					// case where only the score is present inside
+					// the file
+					player.name = std::string("-");
+					player.score = std::stoi(parsed_text.at(1));
+				}
+				scores.push_back(player);
+			}
+			file_scores_r.close();
 		}
-		player.name = username;
-		player.score = p_score;
+		else {
+			std::cerr << "Scores file could not be open" << std::endl;
+			exit(EXIT_FAILURE);
+		}
 
-		scores.push_back(player);
-		file_scores_r.close();
+		if (username.find(',') != std::string::npos) {
+			username.erase(std::remove(username.begin(), username.end(), ','), username.end());
+		}
+		current_player.name = username.empty() ? "-" : username;
+		current_player.score = p_score;
+
+		// insert the new player into the score vector
+		scores.push_back(current_player);
+
 		std::sort(scores.begin(), scores.end(), compare_scores);
+		for (auto ptr = scores.begin(); ptr < scores.end(); ptr++) {
+			std::cout << "[SCORE]" << (*ptr).name << " " << (*ptr).score << std::endl;
+		}
+
+		std::ofstream file_scores_w("scores.csv", std::ios::app);
+
+		if (file_scores_w.is_open()) {
+			// TREAT CASES
+			std::string output_to_file = current_player.name + "," + std::to_string(current_player.score) + '\n';
+			file_scores_w << output_to_file;
+			file_scores_w.close();
+		}
+		else {
+			std::cerr << "Scores file could not be open" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
 		scores_global = scores;
-
 	}
 
-	std::ofstream file_scores_w("scores.txt");
-
-	RenderString(-50.0f, 300.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
-	float dim = 200.0f;
-	int size = scores_global.size() > 5 ? 5 : scores_global.size();
-
-	for (int i = 0; i < size; i++) {
-		std::string line = scores_global[i].name + " . . . . . . . . . . . . " + std::to_string(scores_global[i].score);
-		RenderString(100.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
+	float dim = 280.f;
+	int size = min(scores_global.size(), 5);
+	RenderString(-50.f, 300.f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"LEADERBOARD");
+	for (int i = 0; i < size; ++i) {
+		std::string line = scores_global.at(i).name + ". . . . . . . . . ." + std::to_string(scores_global.at(i).score);
+		RenderString(50.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
 		dim -= 50.0f;
-		file_scores_w << scores_global[i].name << ' ' << scores_global[i].score << '\n';
 	}
-	file_scores_w.close();
-
-
 }
 
 
@@ -604,7 +702,7 @@ void draw_audio_settings() {
 
 	char buffer[32];
 	int n;
-	n = sprintf(buffer, "%.0f", MASTER_VOLUME * 100);
+	n = sprintf(buffer, "%.0f", soundEngine.MASTER_VOLUME*100);
 	RenderString(280.f, 220.f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)buffer);
 
 	draw_button(360, 240, 20, 20, "+");
@@ -632,12 +730,12 @@ void end_game() {
 		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
 
 	RenderString(500.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
-
+	
 
 	// -------------------- leaderboard ------------------
 	top_scores_screen();
 
-	// -------------------- actions ------------------
+	// -------------------- actions ----------------------
 	// main menu
 	draw_button((GLdouble)50, (GLdouble)0, 20, 100, "MAIN MENU");
 
@@ -657,6 +755,8 @@ void game_over_anim() {
 	if (!go_anim) {
 
 		/*---------------------------------------------------------------------------------*/
+		
+		/*
 		if (bg_racing_soundtrack) {
 			bg_racing_soundtrack->stop();
 			bg_racing_soundtrack->drop();
@@ -664,6 +764,7 @@ void game_over_anim() {
 		bg_ending = engine->play2D("Sounds/farewell.wav", true, false, true);
 		bg_ending->setVolume(1.0f * MASTER_VOLUME);
 
+		*/
 		/*---------------------------------------------------------------------------------*/
 		glutDisplayFunc(end_game);
 	}
@@ -683,7 +784,6 @@ void game_over_anim() {
 	}
 
 
-
 	if (x_car_pos_x != GRID_X_LEFT + 200)
 		x_car_pos_x = x_car_pos_x + 0.5;
 	else {
@@ -698,12 +798,29 @@ void game_over_anim() {
 
 	draw_c_car();
 
-
-
 	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
 
+	//TODO restart music
+	/*
+			sound->stop();
+			sound->drop();
+
+			sound = engine->play2D(<SAME_PARAMS>);
+	*/
+
+	///////////////////////////////////////////////////////////////////////////
+	// restart sounds
+	///////////////////////////////////////////////////////////////////////////
+
+	/*
+	if (bg_ending) {
+		// stop the current playing music
+		bg_ending->stop();
+		bg_ending->drop();
+	}
+	*/
 }
 
 void win_anim() {
@@ -728,7 +845,7 @@ void draw_scene(void)
 
 	// -- end game --
 	if (_run == 0) {
-		std::cout << "run = 0";
+		// std::cout << "run = 0";
 		//TODO call end_screen 
 		if (_win)
 			glutDisplayFunc(win_anim);
@@ -758,14 +875,12 @@ char aux[] = "";
 void pre_start(void) {
 
 	/*-----------------------------------------------------------------------------------------------*/
+	/*
 	if (bg_menu_soundtrack) {
 		bg_menu_soundtrack->stop();
 		bg_menu_soundtrack->drop();
 		bg_menu_soundtrack = 0;
 	}
-
-	// bg_racing_soundtrack->setVolume(0.1f * MASTER_VOLUME);
-	// lower the volume in order for the typing sound to be audible
 
 	irrklang::ISound* typing_s = engine->play2D(
 		"Sounds/typing_sfx.wav",
@@ -774,6 +889,7 @@ void pre_start(void) {
 		irrklang::ESM_NO_STREAMING);
 
 	bool typing_p = false;
+	*/
 	/*-----------------------------------------------------------------------------------------------*/
 
 	screen = IN_GAME;
@@ -807,10 +923,12 @@ void pre_start(void) {
 
 	if (dialogue == 1) {
 
+		/*
 		if (!typing_p) {
 			typing_p = true;
 			typing_s->setIsPaused(false);
 		}
+		*/
 
 		draw_background();
 		draw_x_car(index);
@@ -862,12 +980,27 @@ void pre_start(void) {
 		dialogue = 0;
 		glutDisplayFunc(draw_scene);
 
-		bg_racing_soundtrack->setVolume(1.0f * MASTER_VOLUME);
+		/*
+		if (bg_racing_soundtrack) {
+			bg_racing_soundtrack->setVolume(1.0f * MASTER_VOLUME);
+		}
+		else {
+			std::cerr << "[DEBUG]: could not change track volume " << std::endl;
+		}
+		*/
 	}
-
+		
 	// -- easter egg --
 	if (p_car_pos_x < -200) {
 		_ee = 1;
+
+		//TODO 
+		/*
+			STOP MENU MUSIC
+			AND START RACING
+			MUSIC NINO NINO
+		*/
+
 		p_car_pos_x = GRID_X_LEFT;
 		p_car_pos_y = GRID_Y_MID;
 		glutDisplayFunc(draw_scene);
@@ -876,9 +1009,10 @@ void pre_start(void) {
 
 	/*-------------------------------- free allocated resources -------------------------------------*/
 
+	/*
 	typing_s->stop();
 	typing_s->drop();
-
+	*/
 	/*-----------------------------------------------------------------------------------------------*/
 
 	glutPostRedisplay();
@@ -1132,7 +1266,7 @@ void keyboard(int key, int x, int y)
 void leftclick(int x, int y) {
 	switch (screen) {
 	case MAIN_MENU:
-		std::cout << "inside main menu left click";
+		// std::cout << "inside main menu left click";
 		if (x > 300 && x < 500 && y > 140 && y < 180) {
 			glutDisplayFunc(pre_game);
 			break;
@@ -1151,24 +1285,12 @@ void leftclick(int x, int y) {
 		}
 
 		if (x > 320 && x < 360 && y > 200 && y < 240) {
-			if (MASTER_VOLUME > 0.) {
-				MASTER_VOLUME -= 0.01f;
-			}
-
-			if (bg_menu_soundtrack) {
-				bg_menu_soundtrack->setVolume(MASTER_VOLUME);
-			}
+			soundEngine.changeVolume(-.01);
 			break;
 		}
 
 		if (x > 440 && x < 480 && y > 200 && y < 240) {
-			if (MASTER_VOLUME < 1.) {
-				MASTER_VOLUME += 0.01f;
-			}
-
-			if (bg_menu_soundtrack) {
-				bg_menu_soundtrack->setVolume(MASTER_VOLUME);
-			}
+			soundEngine.changeVolume(+.01);
 			break;
 		}
 
@@ -1185,20 +1307,10 @@ void leftclick(int x, int y) {
 
 		// start
 		if (x > 525 && x < 675 && y > 200 && y < 240) {
-
-			bg_racing_soundtrack = engine->play2D(
-				"Sounds/moonlight_8bit.wav",
-				true,
-				false,
-				true
-			);
-
-			bg_racing_soundtrack->setVolume(0.1f * MASTER_VOLUME);
 			for (auto letter : names)
 				username += letter;
 
 			glutDisplayFunc(pre_start);
-
 			break;
 		}
 		// MASTER 
@@ -1253,7 +1365,7 @@ void leftclick(int x, int y) {
 
 		break;
 	case END_GAME:
-
+		// MAIN MENU
 		if (x > 20 && x < 175 && y > 445 && y < 480) {
 			screen = MAIN_MENU;
 			c_car_speed = 1;
@@ -1265,6 +1377,7 @@ void leftclick(int x, int y) {
 			glutDisplayFunc(main_menu);
 			break;
 		}
+		// RESTART
 		if (x > 550 && x < 750 && y > 445 && y < 480) {
 			screen = IN_GAME;
 			p_score = 0;
@@ -1277,7 +1390,6 @@ void leftclick(int x, int y) {
 			glutDisplayFunc(pre_start);
 			break;
 		}
-
 		break;
 	default:
 		break;
@@ -1343,21 +1455,13 @@ void reshape(int w, int h)
 
 int main(int argc, char** argv)
 {
-
-	///////////////////////////////////////////////////////////////////////////
-	// Added sound effects
-	///////////////////////////////////////////////////////////////////////////
-
-	if (!engine) {
-		std::cerr << "ERROR::IRRKLANG: Could not load sound engine" << std::endl;
-		return -1;
-	}
-
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Depaseste masinile - mini game");
+
+	soundEngine.init();
 
 	init();
 	glutSpecialFunc(keyboard);
@@ -1368,12 +1472,5 @@ int main(int argc, char** argv)
 	glutReshapeFunc(reshape);
 
 	glutMainLoop();
-
-	if (bg_ending) {
-		bg_ending->stop();
-		bg_ending->drop();
-	}
-	engine->drop(); // delete engine
-
 	return 0;
 }
