@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="scores.txt">
+    <Text Include="scores.csv">
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>
