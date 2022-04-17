@@ -398,6 +398,7 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
 }
 
 void top_scores_screen() {
+
 	Score current_player;
 	if (!scores_loaded) {
 		scores_loaded = 1;
@@ -460,19 +461,17 @@ void top_scores_screen() {
 			std::cerr << "Scores file could not be open" << std::endl;
 			exit(EXIT_FAILURE);
 		}
+
+		scores_global = scores;
+	}
+
 	draw_button((GLdouble)glutGet(GLUT_WINDOW_WIDTH) * 0.33, (GLdouble)glutGet(GLUT_WINDOW_HEIGHT) * 4 / 5 - 50, "LEADERBOARD");
 	float dim = (GLdouble)glutGet(GLUT_WINDOW_HEIGHT) * 4 / 5 - 250;
-	int size = scores_global.size() > 5 ? 5 : scores_global.size();
-	
-	for (int i = 0; i < size; i++) {
-		std::string line = scores_global[i].name + " . . . . . . . . . . . . " + std::to_string(scores_global[i].score);
+	int size = min(scores_global.size(), 5);
+	for (int i = 0; i < size; ++i) {
+		std::string line = scores_global.at(i).name + ". . . . . . . . . ." + std::to_string(scores_global.at(i).score);
 		RenderString(50.0f, dim, GLUT_BITMAP_TIMES_ROMAN_24, reinterpret_cast<const unsigned char*>(line.c_str()));
 		dim -= 50.0f;
-		file_scores_w << scores_global[i].name << ' ' << scores_global[i].score << '\n';
-	}
-	file_scores_w.close();
-
-	scores_global = scores;
 	}
 }
 
