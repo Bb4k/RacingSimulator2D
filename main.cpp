@@ -175,8 +175,8 @@ private:
 	std::map<std::string, irrklang::ISound*> playingSoundTracks;
 
 public:
-	SoundEngine(SoundEngine const&)		= delete;
-	void operator=(SoundEngine const&)	= delete;
+	SoundEngine(SoundEngine const&) = delete;
+	void operator=(SoundEngine const&) = delete;
 
 	float MASTER_VOLUME = 0.5;
 
@@ -702,7 +702,7 @@ void draw_audio_settings() {
 
 	char buffer[32];
 	int n;
-	n = sprintf(buffer, "%.0f", soundEngine.MASTER_VOLUME*100);
+	n = sprintf(buffer, "%.0f", soundEngine.MASTER_VOLUME * 100);
 	RenderString(280.f, 220.f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)buffer);
 
 	draw_button(360, 240, 20, 20, "+");
@@ -730,7 +730,7 @@ void end_game() {
 		RenderString(225.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)"GAME OVER! Score:");
 
 	RenderString(500.0f, 400.0f, GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char*)(std::to_string(p_score).c_str()));
-	
+
 
 	// -------------------- leaderboard ------------------
 	top_scores_screen();
@@ -755,7 +755,7 @@ void game_over_anim() {
 	if (!go_anim) {
 
 		/*---------------------------------------------------------------------------------*/
-		
+
 		/*
 		if (bg_racing_soundtrack) {
 			bg_racing_soundtrack->stop();
@@ -989,7 +989,7 @@ void pre_start(void) {
 		}
 		*/
 	}
-		
+
 	// -- easter egg --
 	if (p_car_pos_x < -200) {
 		_ee = 1;
