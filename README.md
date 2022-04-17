@@ -23,7 +23,7 @@ Am dezvoltat un joc de tip arcarde, in care scopul este sa incerci sa scapi de o
 - [ ] prezentarea proiectului la laborator.
 
 
-## Aspecte punctuale:
+## Aspecte punctuale
 1. TRANSFORMARI:<br />
 &emsp;Deplasarea pe Ox si/sau Oy al obiectului principal si ale a celor secundare
 2. TRANSFORMARI COMPUSE:<br />
@@ -35,7 +35,7 @@ Am dezvoltat un joc de tip arcarde, in care scopul este sa incerci sa scapi de o
 5. EFECTE SONORE:<br />
 &emsp;Diverse efecte sonore in momente cheie ale aplicatiei, coloana sonora de inceput/final, diverse efecte.
 
-## Originalitate:
+## Originalitate
 &emsp;Proiectul se bazeaza pe un workflow alcatuit dintr-un sistem de ecrane, asa cum se poate vedea si in poza de mai jos. Sistemul are la baza constante predefinite pentru toate starile jocului (MAIN_MENU, IN_GAME etc.). Jocul prezinta doua moduri de joc, FREERUN si CAMPAIGN (in dezvoltare) si ambele au ca scop evitarea cat mai multor masini si scaparea de masina de politie.<br />
 &emsp;Originalitatea din meniul principal este realizata de miscarea in “slow motion” in momentul cand cursorul sta nemiscat si miscarea in “fast forward” cand miscam cursorul, dar si prin prezenta meniului de optiuni, de unde putem micsora sau marii volumul melodiilor de fundal.<br />
 &emsp;Alta nota de originalitate provine din ecranul de configurarea al jocului de unde ne putem alege modelul masinii, culoarea masinii (culoarea aleasa ultima data o sa fie prezenta in toate fundalurile), modul de joc si username-ul.<br />
