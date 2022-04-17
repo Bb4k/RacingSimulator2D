@@ -172,7 +172,7 @@ private:
 	}
 
 	irrklang::ISoundEngine* engine;
-	std::vector<irrklang::ISound*> playingSoundTracks;
+	std::map<std::string, irrklang::ISound*> playingSoundTracks;
 
 public:
 	SoundEngine(SoundEngine const&)		= delete;
@@ -194,7 +194,21 @@ public:
 			"Sounds/moonlight_8bit.wav", true, true, true, irrklang::ESM_NO_STREAMING
 		);
 
-		playingSoundTracks.push_back(this->bg_main_menu_soundtrack);
+		this->playingSoundTracks.emplace(
+			std::string("bg_main_menu_soundtrack"), this->bg_main_menu_soundtrack);
+		this->playingSoundTracks.emplace(
+			std::string("bg_racing_soundtrack"), this->bg_racing_soundtrack);
+	}
+
+	void changeVolume(float value) {
+		if (MASTER_VOLUME <= 0 || MASTER_VOLUME >= 100) {
+			std::cerr << "Volume cannot be modified any further\n";
+			return;
+		}
+		MASTER_VOLUME += value;
+		for (auto&& pair = this->playingSoundTracks.begin(); pair != this->playingSoundTracks.end(); ++pair) {
+			(*pair).second->setVolume(1.f * MASTER_VOLUME);
+		}
 	}
 };
 
@@ -1271,28 +1285,12 @@ void leftclick(int x, int y) {
 		}
 
 		if (x > 320 && x < 360 && y > 200 && y < 240) {
-			if (soundEngine.MASTER_VOLUME > 0.) {
-				soundEngine.MASTER_VOLUME -= 0.01f;
-			}
-
-			/*
-			if (bg_menu_soundtrack) {
-				bg_menu_soundtrack->setVolume(MASTER_VOLUME);
-			}
-			*/
+			soundEngine.changeVolume(-.01);
 			break;
 		}
 
 		if (x > 440 && x < 480 && y > 200 && y < 240) {
-			if (soundEngine.MASTER_VOLUME < 1.) {
-				soundEngine.MASTER_VOLUME += 0.01f;
-			}
-
-			/*
-			if (bg_menu_soundtrack) {
-				bg_menu_soundtrack->setVolume(MASTER_VOLUME);
-			}
-			*/
+			soundEngine.changeVolume(+.01);
 			break;
 		}
 
