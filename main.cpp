@@ -173,31 +173,56 @@ private:
 
 	irrklang::ISoundEngine* engine;
 	std::map<std::string, irrklang::ISound*> playingSoundTracks;
+	std::map<std::string, irrklang::ISoundSource*> soundSources;
 
 public:
 	SoundEngine(SoundEngine const&)		= delete;
 	void operator=(SoundEngine const&)	= delete;
 
 	float MASTER_VOLUME = 0.5;
+	std::map<std::string, irrklang::ISound*>& getPlayingSoundTracksMap() {
+		return this->playingSoundTracks;
+	}
+	std::map<std::string, irrklang::ISoundSource*> getSoundSourcesMap;
 
-	// --------------   SOUND TRACKS  --------------------
+	// --------------   SOUND TRACKS HANDLERS ------------
 	irrklang::ISound* bg_racing_soundtrack;
 	irrklang::ISound* bg_main_menu_soundtrack;
 	irrklang::ISound* typing_soundtrack;
+	irrklang::ISound* crash_soundtrack;
 	// ---------------------------------------------------
 
 	void init() {
-		this->bg_main_menu_soundtrack = this->engine->play2D(
-			"Sounds/car_chase.mp3", true, false, true, irrklang::ESM_STREAMING
+		// ------------------ LOAD SOUND SOURCES ------------------------
+		this->soundSources.emplace(
+			"bg_main_menu_soundtrack",
+			this->engine->addSoundSourceFromFile(
+				"Sounds/car_chase.mp3",			irrklang::ESM_AUTO_DETECT)
 		);
-		this->bg_racing_soundtrack = this->engine->play2D(
-			"Sounds/moonlight_8bit.wav", true, true, true, irrklang::ESM_NO_STREAMING
+		this->soundSources.emplace(
+			"bg_racing_soundtrack",
+			this->engine->addSoundSourceFromFile(
+				"Sounds/moonlight_8bit.wav",	irrklang::ESM_AUTO_DETECT)
 		);
+		this->soundSources.emplace(
+			"typing_soundtrack",
+			this->engine->addSoundSourceFromFile(
+				"Sounds/typing_sfx.wav",		irrklang::ESM_AUTO_DETECT)
+		);
+		this->soundSources.emplace(
+			"crash_soundtrack",
+			this->engine->addSoundSourceFromFile(
+				"Sounds/atari_crash.wav",		irrklang::ESM_NO_STREAMING)
+		);
+		// --------------------------------------------------------------
 
 		this->playingSoundTracks.emplace(
-			std::string("bg_main_menu_soundtrack"), this->bg_main_menu_soundtrack);
-		this->playingSoundTracks.emplace(
-			std::string("bg_racing_soundtrack"), this->bg_racing_soundtrack);
+			"bg_main_menu_soundtrack",
+			this->engine->play2D(
+				this->soundSources.at("bg_main_menu_soundtrack"),
+				true, false, true, irrklang::ESM_STREAMING
+			)
+		);
 	}
 
 	void changeVolume(float value) {
@@ -210,6 +235,26 @@ public:
 			(*pair).second->setVolume(1.f * MASTER_VOLUME);
 		}
 	}
+
+	irrklang::ISound* play2D(const std::string& soundtrackName, bool loop = false, bool paused = false,
+		irrklang::E_STREAM_MODE streamingMode = irrklang::ESM_AUTO_DETECT) {
+		irrklang::ISound* playingSound = 
+			engine->play2D(soundSources.at(soundtrackName), loop, paused, true, streamingMode);
+
+		this->playingSoundTracks.emplace(soundtrackName, playingSound);
+		std::cout << "[DEBUG] Added " << soundtrackName << " to playingMap\n";
+		return playingSound;
+	}
+
+	/*
+	void drop(const std::string& soundTrackName) {
+		auto it = playingSoundTracks.find(soundTrackName);
+		if (it != playingSoundTracks.end()) {
+			if (!(*it).second->isFinished())
+				(*it).second->drop();
+		}
+	}
+	*/
 };
 
 SoundEngine& soundEngine = SoundEngine::getInstance();
@@ -846,15 +891,14 @@ void draw_scene(void)
 	// -- end game --
 	if (_run == 0) {
 		// std::cout << "run = 0";
-		//TODO call end_screen 
+		//TODO call end_screen
+
 		if (_win)
 			glutDisplayFunc(win_anim);
 		else {
 			x_car_pos_x = -150;
 			glutDisplayFunc(game_over_anim);
 		}
-
-
 	}
 
 	startgame();
@@ -871,25 +915,13 @@ int sec_anim = 0;
 int next_chr = 1;
 char text[9] = "CATCH ME";
 char aux[] = "";
+bool typing_p = true;
 
 void pre_start(void) {
 
 	/*-----------------------------------------------------------------------------------------------*/
-	/*
-	if (bg_menu_soundtrack) {
-		bg_menu_soundtrack->stop();
-		bg_menu_soundtrack->drop();
-		bg_menu_soundtrack = 0;
-	}
-
-	irrklang::ISound* typing_s = engine->play2D(
-		"Sounds/typing_sfx.wav",
-		false,
-		true,
-		irrklang::ESM_NO_STREAMING);
-
-	bool typing_p = false;
-	*/
+	soundEngine.getPlayingSoundTracksMap()
+		.at("bg_main_menu_soundtrack")->setIsPaused(true);
 	/*-----------------------------------------------------------------------------------------------*/
 
 	screen = IN_GAME;
@@ -923,16 +955,14 @@ void pre_start(void) {
 
 	if (dialogue == 1) {
 
-		/*
-		if (!typing_p) {
-			typing_p = true;
-			typing_s->setIsPaused(false);
-		}
-		*/
-
 		draw_background();
 		draw_x_car(index);
 		Sleep(15); //slow-mo
+
+		if (typing_p) {
+			typing_p = false;
+			soundEngine.play2D("typing_soundtrack");
+		}
 
 		if (next_chr <= strlen(text)) {
 
@@ -950,8 +980,13 @@ void pre_start(void) {
 		}
 		++index;
 	}
+
 	++index;
 	if (sec_anim == 1) {
+
+		typing_p = true;
+		//soundEngine.drop("typing_soundtrack");
+		soundEngine.getPlayingSoundTracksMap().at("typing_soundtrack")->stop();
 
 		glPushMatrix();
 		draw_p_car();
@@ -980,14 +1015,8 @@ void pre_start(void) {
 		dialogue = 0;
 		glutDisplayFunc(draw_scene);
 
-		/*
-		if (bg_racing_soundtrack) {
-			bg_racing_soundtrack->setVolume(1.0f * MASTER_VOLUME);
-		}
-		else {
-			std::cerr << "[DEBUG]: could not change track volume " << std::endl;
-		}
-		*/
+		soundEngine.getPlayingSoundTracksMap()
+			.at("bg_racing_soundtrack")->setVolume(soundEngine.MASTER_VOLUME);
 	}
 		
 	// -- easter egg --
@@ -1006,15 +1035,6 @@ void pre_start(void) {
 		glutDisplayFunc(draw_scene);
 
 	}
-
-	/*-------------------------------- free allocated resources -------------------------------------*/
-
-	/*
-	typing_s->stop();
-	typing_s->drop();
-	*/
-	/*-----------------------------------------------------------------------------------------------*/
-
 	glutPostRedisplay();
 	glutSwapBuffers();
 	glFlush();
@@ -1311,6 +1331,9 @@ void leftclick(int x, int y) {
 				username += letter;
 
 			glutDisplayFunc(pre_start);
+			soundEngine.play2D("bg_racing_soundtrack");
+			soundEngine.getPlayingSoundTracksMap()
+				.at("bg_racing_soundtrack")->setVolume(.1 * soundEngine.MASTER_VOLUME);
 			break;
 		}
 		// MASTER 
