@@ -20,7 +20,7 @@ Am dezvoltat un joc de tip arcarde, in care scopul este sa incerci sa scapi de o
 ### 3p:
 
 - [x] documentatia: continut, claritatea descrierii proiectului si a solutiilor propuse, evidentierea unor aspecte punctuale din lista de mai sus (primitive, transformari, compunerea transformarilor), argumentarea originalitatii, redactarea textului;
-- [ ] prezentarea proiectului la laborator.
+- [x] prezentarea proiectului la laborator.
 
 
 ## Aspecte punctuale
